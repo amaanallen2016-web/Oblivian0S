@@ -7,16 +7,21 @@
 <!-- PeerJS for FaceTime (WebRTC) -->
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
+  /* =========================================
+     CORE SYSTEM STYLES & LAYOUT
+     ========================================= */
   :root {
     --system-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --accent: #007aff;
   }
-  * { box-sizing: border-box; user-select: none; }
+  * { box-sizing: border-box; user-select: none; -webkit-user-drag: none; }
   body, html { height: 100%; margin: 0; overflow: hidden; font-family: var(--system-font); background: #000; }
   
-  /* Wallpaper */
+  /* The Forest Wallpaper */
   #wallpaper {
     position: fixed; inset: 0; z-index: 0;
     background: url('https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+    transition: background 0.5s ease;
   }
 
   /* Top Menu Bar */
@@ -27,16 +32,17 @@
     color: #000; font-size: 13px; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   }
   .menu-left, .menu-right { display: flex; gap: 20px; align-items: center; }
-  .menu-item { cursor: pointer; opacity: 0.9; }
+  .menu-item { cursor: pointer; opacity: 0.9; transition: opacity 0.2s; }
   .menu-item:hover { opacity: 1; }
-  .apple-logo { font-size: 16px; margin-right: 5px; }
-  .menu-right svg { width: 16px; height: 16px; fill: currentColor; cursor: pointer; }
+  .apple-logo { font-size: 16px; margin-right: 5px; cursor: default; }
+  .menu-right svg { width: 16px; height: 16px; fill: currentColor; cursor: pointer; opacity: 0.8; }
+  .menu-right svg:hover { opacity: 1; }
 
-  /* Left Widgets (Locked Positions) */
+  /* Left Widgets */
   #widgets {
     position: absolute; top: 50px; left: 30px; z-index: 10;
     display: flex; flex-direction: column; gap: 15px;
-    pointer-events: none; /* Let clicks pass through to windows */
+    pointer-events: none;
   }
   .widget {
     background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
@@ -47,17 +53,17 @@
   .w-weather { background: linear-gradient(180deg, #3b82f6, #2563eb); border: none; }
   .w-weather h2 { margin: 0; font-size: 34px; font-weight: 400; }
   .w-weather p { margin: 4px 0; font-size: 14px; font-weight: 500; }
-  .w-weather .desc { font-size: 12px; opacity: 0.9; }
+  .w-weather .desc { font-size: 12px; opacity: 0.9; line-height: 1.4; }
   
   .w-battery { text-align: center; }
-  .w-battery .ring { width: 60px; height: 60px; border-radius: 50%; border: 6px solid rgba(255,255,255,0.3); border-top-color: #ef4444; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .w-battery .ring { width: 60px; height: 60px; border-radius: 50%; border: 6px solid rgba(255,255,255,0.3); border-top-color: #ef4444; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600;}
   
   .w-calendar { height: 160px; }
   .w-calendar .header { color: #ef4444; font-size: 12px; font-weight: 700; text-transform: uppercase; }
   .w-calendar .date { font-size: 40px; font-weight: 300; line-height: 1; margin-top: 5px; color: #000; }
-  .w-calendar .event { font-size: 11px; color: #000; margin-top: 10px; }
+  .w-calendar .event { font-size: 11px; color: #000; margin-top: 10px; line-height: 1.3; }
 
-  /* Center Clock (Locked Center) */
+  /* Center Clock */
   #clock {
     position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
     font-size: 140px; font-weight: 500; color: #fff; letter-spacing: -4px;
@@ -65,7 +71,7 @@
     white-space: nowrap;
   }
 
-  /* Desktop Icons (Top Right) */
+  /* Desktop Icons */
   #desktop-icons {
     position: absolute; top: 50px; right: 20px; z-index: 10;
     display: flex; flex-direction: column; gap: 20px; align-items: center;
@@ -75,7 +81,7 @@
   .d-icon .img { width: 60px; height: 60px; background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
   .d-icon span { color: #fff; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); text-align: center; font-weight: 500;}
 
-  /* Bottom Dock (Locked Bottom) */
+  /* Dock */
   #dock-container {
     position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 9999;
     max-width: 100vw;
@@ -84,7 +90,7 @@
     display: flex; gap: 6px; padding: 8px 12px; border-radius: 24px;
     background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
     border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    align-items: flex-end; overflow-x: auto; overflow-y: hidden; /* Scroll dock if too small */
+    align-items: flex-end; overflow-x: auto; overflow-y: hidden;
     scrollbar-width: none;
   }
   #dock::-webkit-scrollbar { display: none; }
@@ -96,25 +102,30 @@
   .dock-item:hover { transform: scale(1.3) translateY(-10px); margin: 0 6px; }
   .dock-item:hover .tooltip { opacity: 1; }
   .tooltip {
-    position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.6); color: #fff; font-size: 11px; padding: 4px 8px; border-radius: 6px;
+    position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.7); color: #fff; font-size: 12px; padding: 4px 10px; border-radius: 6px;
     opacity: 0; pointer-events: none; transition: opacity 0.2s; white-space: nowrap;
   }
   .dock-divider { width: 1px; height: 48px; background: rgba(255,255,255,0.3); margin: 0 6px; align-self: center; min-width: 1px; }
+  .dot-indicator { position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: #000; opacity: 0; transition: opacity 0.2s; }
+  .dock-item.active .dot-indicator { opacity: 1; }
 
-  /* Windows */
+  /* =========================================
+     WINDOW MANAGER STYLES
+     ========================================= */
   #desk-windows { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
   .win {
-    position: absolute; pointer-events: auto; display: flex; flex-direction: column; min-width: 350px; min-height: 250px;
+    position: absolute; pointer-events: auto; display: flex; flex-direction: column; min-width: 400px; min-height: 300px;
     background: #ffffff; border-radius: 12px; overflow: hidden;
     box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1);
     animation: pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    resize: both;
   }
   @keyframes pop { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
   
   .win-header {
     height: 38px; background: #f6f6f6; border-bottom: 1px solid #e5e5e5;
-    display: flex; align-items: center; padding: 0 12px; cursor: grab;
+    display: flex; align-items: center; padding: 0 12px; cursor: grab; flex-shrink: 0;
   }
   .win-header:active { cursor: grabbing; }
   .traffic-lights { display: flex; gap: 8px; }
@@ -125,60 +136,78 @@
   .tl.close:hover, .tl.min:hover, .tl.max:hover { filter: brightness(0.8); }
   .win-title { flex: 1; text-align: center; font-size: 13px; font-weight: 600; color: #333; margin-right: 50px; }
   
-  .win-body { flex: 1; overflow: auto; background: #fff; color: #333; font-size: 13px; display: flex; flex-direction: column;}
+  .win-body { flex: 1; overflow: auto; background: #fff; color: #333; font-size: 13px; display: flex; flex-direction: column; }
 
-  /* App UI inside windows */
+  /* =========================================
+     APP-SPECIFIC UI STYLES
+     ========================================= */
   .app-pad { padding: 20px; }
-  .app-btn { background: #007aff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .app-btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .app-btn:hover { background: #0066cc; }
   .app-btn.sec { background: #e5e5ea; color: #000; }
-  .app-input { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-bottom: 10px; outline: none; }
-  .app-input:focus { border-color: #007aff; }
+  .app-btn.sec:hover { background: #d1d1d6; }
+  .app-input { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-bottom: 10px; outline: none; font-family: inherit; }
+  .app-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
   
   /* Games Grid */
   .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; padding: 20px; }
   .game-tile { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s; }
   .game-tile:hover { background: #f0f0f5; }
   .game-tile .ico { font-size: 40px; margin-bottom: 8px; }
-  .game-tile .nm { font-size: 12px; font-weight: 500; color: #333; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .game-tile .nm { font-size: 12px; font-weight: 500; color: #333; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word;}
 
-  /* Chat UI */
+  /* Chat */
   .mac-chat { display: flex; height: 100%; flex: 1; }
   .mac-chat .side { width: 220px; background: #f6f6f6; border-right: 1px solid #e5e5e5; padding: 10px; overflow-y: auto; }
   .mac-chat .main { flex: 1; display: flex; flex-direction: column; }
   .mac-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
-  .mac-msg { max-width: 70%; padding: 8px 12px; border-radius: 16px; font-size: 13px; }
-  .mac-msg.me { align-self: flex-end; background: #007aff; color: #fff; border-bottom-right-radius: 4px; }
+  .mac-msg { max-width: 70%; padding: 8px 12px; border-radius: 16px; font-size: 13px; line-height: 1.4; word-wrap: break-word; }
+  .mac-msg.me { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
   .mac-msg.them { align-self: flex-start; background: #e5e5ea; color: #000; border-bottom-left-radius: 4px; }
   .mac-composer { padding: 10px; border-top: 1px solid #e5e5e5; display: flex; gap: 8px; background: #f6f6f6; }
   .mac-composer input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 16px; outline: none; }
-  .mac-composer button { background: #007aff; color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; }
+  .mac-composer button { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: grid; place-items: center; }
 
-  /* FaceTime UI */
-  .ft-container { display: flex; flex-direction: column; height: 100%; background: #1a1a1a; color: #fff; }
-  .ft-video-area { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #000; }
-  .ft-local-video { position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: #333; border-radius: 10px; object-fit: cover; border: 2px solid #555; z-index: 10; }
+  /* FaceTime */
+  .ft-container { display: flex; flex-direction: column; height: 100%; background: #1a1a1a; color: #fff; position: relative; }
+  .ft-video-area { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden;}
+  .ft-local-video { position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: #333; border-radius: 10px; object-fit: cover; border: 2px solid #555; z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.5);}
   .ft-remote-video { width: 100%; height: 100%; object-fit: cover; }
-  .ft-controls { height: 80px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; gap: 20px; }
-  .ft-btn { width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .ft-controls { height: 80px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; gap: 20px; position: absolute; bottom: 0; width: 100%; z-index: 20;}
+  .ft-btn { width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;}
+  .ft-btn:hover { transform: scale(1.1); }
   .ft-btn.end { background: #ff3b30; color: white; }
   .ft-btn.start { background: #34c759; color: white; }
-  .ft-setup { padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-  .ft-setup input { width: 100%; max-width: 300px; padding: 10px; border-radius: 8px; border: none; text-align: center; font-size: 16px; }
-  .ft-code { font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #007aff; margin: 10px 0; }
+  .ft-btn.toggle { background: #555; color: white; }
+  .ft-btn.toggle.off { background: #ff3b30; }
+  .ft-setup { padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; height: 100%; }
+  .ft-setup input { width: 100%; max-width: 300px; padding: 12px; border-radius: 8px; border: none; text-align: center; font-size: 16px; outline: none;}
+  .ft-code { font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #34c759; margin: 10px 0; background: #222; padding: 10px 20px; border-radius: 8px;}
 
+  /* Terminal */
+  .term-body { background: #000; color: #fff; font-family: "Courier New", Courier, monospace; height: 100%; padding: 10px; display: flex; flex-direction: column; }
+  .term-out { flex: 1; overflow: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.5; }
+  .term-input-line { display: flex; gap: 8px; margin-top: 8px; }
+  .term-input-line input { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-family: inherit; font-size: 13px; }
+
+  /* Music Player */
+  .music-player { padding: 20px; text-align: center; }
+  .music-art { width: 150px; height: 150px; background: linear-gradient(45deg, #ff9a9e, #fecfef); border-radius: 10px; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); display: grid; place-items: center; font-size: 60px;}
+  .music-controls { display: flex; justify-content: center; gap: 15px; margin-top: 20px; font-size: 24px; color: var(--accent); }
+  
   /* Boot Screen */
   #boot { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
   #boot.fade { opacity: 0; pointer-events: none; }
   #boot .apple-logo { font-size: 80px; color: #fff; margin-bottom: 20px; animation: pulse 2s infinite; }
   #boot .bar { width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
-  #boot .bar div { width: 0%; height: 100%; background: #fff; animation: load 1.5s forwards; }
+  #boot .bar div { width: 0%; height: 100%; background: #fff; animation: load 2s forwards; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   @keyframes load { to { width: 100%; } }
 </style>
 </head>
 <body>
 
+<!-- Boot Sequence -->
 <div id="boot">
   <div class="apple-logo"></div>
   <div class="bar"><div></div></div>
@@ -244,19 +273,17 @@
   </div>
 </div>
 
-<!-- Windows Area -->
+<!-- Windows Render Area -->
 <div id="desk-windows"></div>
 
 <!-- Dock -->
 <div id="dock-container">
-  <div id="dock">
-    <!-- Apps injected via JS -->
-  </div>
+  <div id="dock"></div>
 </div>
 
 <script>
 /* =========================================================
-   CORE OS LOGIC
+   1. SYSTEM STATE & CLOCK
    ========================================================= */
 const state = {
   user: JSON.parse(localStorage.getItem('obl_user')) || null
@@ -272,35 +299,42 @@ function updateTime() {
 setInterval(updateTime, 1000);
 updateTime();
 
-// Window Manager
+/* =========================================================
+   2. WINDOW MANAGER
+   ========================================================= */
 let zTop = 1000;
 const openWins = {};
 
 function updateDockState() {
   document.querySelectorAll('.dock-item').forEach(el => {
     const id = el.dataset.app;
-    el.style.opacity = (openWins[id] && document.body.contains(openWins[id]) && openWins[id].style.display !== 'none') ? '1' : '0.8';
+    if (openWins[id] && document.body.contains(openWins[id]) && openWins[id].style.display !== 'none') {
+      el.classList.add('active');
+    } else {
+      el.classList.remove('active');
+    }
   });
 }
 
 function makeWindow(title, html, opts = {}) {
   const win = document.createElement('div');
   win.className = 'win';
+  
+  // Set size and position
   win.style.width = (opts.w || 760) + 'px';
   win.style.height = (opts.h || 520) + 'px';
   
-  // Center new windows
   const n = document.querySelectorAll('#desk-windows .win').length;
-  win.style.left = Math.max(10, Math.min(window.innerWidth/2 - (opts.w||760)/2 + n*20, window.innerWidth - 400)) + 'px';
-  win.style.top = Math.max(40, Math.min(window.innerHeight/2 - (opts.h||520)/2 + n*20, window.innerHeight - 300)) + 'px';
+  win.style.left = Math.max(10, Math.min(window.innerWidth/2 - (opts.w||760)/2 + (n*20), window.innerWidth - 400)) + 'px';
+  win.style.top = Math.max(40, Math.min(window.innerHeight/2 - (opts.h||520)/2 + (n*20), window.innerHeight - 300)) + 'px';
   win.style.zIndex = ++zTop;
 
   win.innerHTML = `
     <div class="win-header">
       <div class="traffic-lights">
-        <div class="tl close"></div>
-        <div class="tl min"></div>
-        <div class="tl max"></div>
+        <div class="tl close" title="Close"></div>
+        <div class="tl min" title="Minimize"></div>
+        <div class="tl max" title="Maximize"></div>
       </div>
       <div class="win-title">${title}</div>
     </div>
@@ -309,7 +343,7 @@ function makeWindow(title, html, opts = {}) {
 
   document.getElementById('desk-windows').appendChild(win);
 
-  // Dragging
+  // Drag Logic
   const head = win.querySelector('.win-header');
   let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
   head.addEventListener('pointerdown', e => {
@@ -327,7 +361,7 @@ function makeWindow(title, html, opts = {}) {
 
   win.addEventListener('pointerdown', () => { win.style.zIndex = ++zTop; });
 
-  // Buttons
+  // Window Controls
   win.querySelector('.close').onclick = () => { win.remove(); delete openWins[opts.id]; updateDockState(); };
   win.querySelector('.min').onclick = () => { win.style.display = 'none'; updateDockState(); };
   win.querySelector('.max').onclick = () => {
@@ -345,51 +379,210 @@ function makeWindow(title, html, opts = {}) {
 }
 
 /* =========================================================
-   APPS
+   3. APPLICATIONS
    ========================================================= */
 
-// 1. FaceTime (Real WebRTC via PeerJS)
-let peer = null;
-let localStream = null;
+// ---------------------------------------------------------
+// APP: GAMES (Massive List + GTA V at top)
+// ---------------------------------------------------------
+async function appGames() {
+  const body = `
+    <div style="padding:15px 20px 0;">
+      <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <input id="g-search" class="app-input" style="flex:1;" placeholder="Search 6000+ games...">
+        <button class="app-btn" id="g-add">+ Custom URL</button>
+      </div>
+      <div style="font-size:12px; color:#666; margin-bottom:10px;" id="g-status">Loading games...</div>
+    </div>
+    <div class="game-grid" id="g-grid"></div>
+    <div style="text-align:center; padding:20px;" id="g-more"></div>
+  `;
+  
+  const win = makeWindow('Games', body, { id: 'games', w: 950, h: 650 });
+  const grid = win.querySelector('#g-grid');
+  const status = win.querySelector('#g-status');
+  const moreEl = win.querySelector('#g-more');
+  
+  let allGames = [];
+  let displayedCount = 100; // Initial load size
+  let searchQuery = '';
+
+  // CORE RENDER FUNCTION
+  function render() {
+    const q = searchQuery.toLowerCase();
+    const matches = q ? allGames.filter(g => (g.name||'').toLowerCase().includes(q)) : allGames;
+    
+    // Only render the chunk we need to prevent browser crash
+    const toRender = q ? matches.slice(0, 300) : matches.slice(0, displayedCount);
+    
+    grid.innerHTML = '';
+    toRender.forEach(g => {
+      const d = document.createElement('div');
+      d.className = 'game-tile';
+      d.innerHTML = `<div class="ico">${g.ico || '🎮'}</div><div class="nm">${g.name}</div>`;
+      d.onclick = () => launchGame(g);
+      grid.appendChild(d);
+    });
+    
+    if (matches.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666;padding:20px;">No games found for that search.</div>';
+    }
+    
+    // Pagination Button
+    moreEl.innerHTML = '';
+    if (!q && matches.length > displayedCount) {
+      const btn = document.createElement('button');
+      btn.className = 'app-btn sec';
+      btn.textContent = `Load More (${matches.length - displayedCount} games left)`;
+      btn.onclick = () => { 
+        displayedCount += 200; 
+        render(); 
+        win.querySelector('.win-body').scrollTop = win.querySelector('.win-body').scrollHeight; // scroll down
+      };
+      moreEl.appendChild(btn);
+    }
+  }
+
+  win.querySelector('#g-search').oninput = e => {
+    searchQuery = e.target.value;
+    render();
+  };
+  
+  win.querySelector('#g-add').onclick = () => {
+    const u = prompt('Enter Game URL (must allow embedding):');
+    if (u) launchGame({ name: 'Custom Game', ico: '🔗', url: u });
+  };
+
+  // 1. HARDCODE GTA V AT THE VERY TOP
+  allGames.push({ 
+    name: 'GTA V (Fan Project)', 
+    ico: '🚗', 
+    type: 'embed', 
+    url: 'https://eta5.vercel.app/play?artwork=regular' 
+  });
+  
+  // 2. Add featured games
+  const featured = [
+    {name:'Snake', ico:'🐍', type:'inline', fn:'snake'},
+    {name:'Hextris', ico:'⬡', type:'embed', url:'https://hextris.io/'},
+    {name:'2048', ico:'🔢', type:'embed', url:'https://play2048.co/'},
+    {name:'Astray', ico:'🧊', type:'embed', url:'https://wwwtyro.github.io/Astray/'},
+    {name:'Doom', ico:'👹', type:'embed', url:'https://archive.org/embed/doom-play'},
+    {name:'Wolfenstein 3D', ico:'🪖', type:'embed', url:'https://archive.org/embed/msdos_Wolfenstein_3D_1992'}
+  ];
+  allGames.push(...featured);
+  render(); // Render immediately so user sees GTA at top instantly
+
+  status.textContent = "Fetching archive.org (this may take a moment)...";
+
+  // 3. FETCH ARCHIVE.ORG (Massive library)
+  try {
+    const collections = [
+      'softwarelibrary_msdos_games', 
+      'internetarcade', 
+      'softwarelibrary_apple_II', 
+      'softwarelibrary_atari_2600',
+      'softwarelibrary_commodore_64'
+    ];
+    
+    const requests = collections.map(c => 
+      fetch(`https://archive.org/advancedsearch.php?q=collection%3A${c}&fl%5B%5D=identifier&fl%5B%5D=title&rows=500&output=json`)
+      .then(r => r.json())
+      .catch(() => null)
+    );
+    
+    const results = await Promise.all(requests);
+    let archiveGames = [];
+    
+    results.forEach(data => {
+      if(data && data.response && data.response.docs) {
+        data.response.docs.forEach(doc => {
+          // Deduplicate against existing list
+          if(doc.title && doc.identifier) {
+            archiveGames.push({
+              name: doc.title, 
+              ico: '💾', 
+              type: 'embed', 
+              url: 'https://archive.org/embed/' + doc.identifier
+            });
+          }
+        });
+      }
+    });
+    
+    // Merge
+    allGames = [...allGames, ...archiveGames];
+    status.textContent = `Loaded ${allGames.length} games successfully. GTA is at the top.`;
+    render();
+    
+  } catch(e) { 
+    status.textContent = `Loaded ${allGames.length} games (archive fetch failed).`; 
+  }
+}
+
+function launchGame(g) {
+  if (g.type === 'inline' && g.fn === 'snake') {
+    return makeWindow('Snake Game', '<div style="display:grid;place-items:center;height:100%;font-size:24px;">🐍 Snake game placeholder (requires canvas logic)</div>', {w:500, h:500});
+  }
+  
+  const body = `
+    <div style="display:flex; flex-direction:column; height:100%;">
+      <div style="padding:8px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:12px; color:#666; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px;">${g.url}</span>
+        <button class="app-btn sec" onclick="window.open('${g.url}', '_blank')">Open Externally</button>
+      </div>
+      <iframe src="${g.url}" style="flex:1; border:none; width:100%; background:#000;" allow="fullscreen; autoplay"></iframe>
+    </div>
+  `;
+  makeWindow(g.name, body, { w: 950, h: 650 });
+}
+
+// ---------------------------------------------------------
+// APP: FACETIME (WebRTC)
+// ---------------------------------------------------------
+let ftPeer = null;
+let ftStream = null;
 
 async function appFaceTime() {
-  if (!peer) {
-    peer = new Peer();
-  }
+  if (!ftPeer) ftPeer = new Peer();
 
   const body = `
     <div class="ft-container">
       <div class="ft-setup" id="ft-setup">
-        <h2 style="margin:0;">FaceTime</h2>
-        <p>To start a call, allow camera/mic access.</p>
-        <button class="app-btn" id="ft-allow" style="background:#34c759;">Allow Camera & Mic</button>
+        <h2 style="margin:0; font-weight:300;">FaceTime</h2>
+        <p style="color:#aaa;">To start a call, allow camera/mic access.</p>
+        <button class="app-btn start" id="ft-allow" style="padding:12px 24px; font-size:16px; border-radius:20px;">Allow Camera & Mic</button>
         
         <div id="ft-active" style="display:none; text-align:center; width:100%;">
-          <p>Your FaceTime ID:</p>
+          <p style="margin-bottom:5px;">Your FaceTime ID:</p>
           <div class="ft-code" id="ft-my-id">Connecting...</div>
-          <p>Share this ID with a friend to have them call you.</p>
+          <p style="color:#aaa; font-size:12px;">Share this ID so others can call you.</p>
           
-          <hr style="border-color:#333; margin:20px 0;">
+          <hr style="border-color:#333; margin:20px 0; width:80%;">
           
-          <p>Or call a friend:</p>
-          <input type="text" id="ft-remote-id" placeholder="Enter their FaceTime ID">
-          <button class="app-btn" id="ft-call-btn">Call</button>
+          <p style="margin-bottom:5px;">Or call a friend:</p>
+          <div style="display:flex; gap:10px; justify-content:center;">
+            <input type="text" id="ft-remote-id" placeholder="Enter their FaceTime ID" style="width:200px;">
+            <button class="app-btn start" id="ft-call-btn">Call</button>
+          </div>
         </div>
       </div>
       
       <div class="ft-video-area" id="ft-video-area" style="display:none;">
         <video id="ft-remote-video" class="ft-remote-video" autoplay></video>
         <video id="ft-local-video" class="ft-local-video" autoplay muted></video>
-        <div id="ft-status" style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:10px;">Connecting...</div>
+        <div id="ft-status" style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.6); padding:8px 16px; border-radius:12px; font-weight:600;">Connecting...</div>
       </div>
       
       <div class="ft-controls" id="ft-controls" style="display:none;">
-        <button class="ft-btn end" id="ft-end">📞</button>
+        <button class="ft-btn toggle" id="ft-mute-btn" title="Mute">🎤</button>
+        <button class="ft-btn toggle" id="ft-video-btn" title="Turn off camera">📹</button>
+        <button class="ft-btn end" id="ft-end" title="End Call">📞</button>
       </div>
     </div>
   `;
 
-  const win = makeWindow('FaceTime', body, { id: 'facetime', w: 700, h: 550 });
+  const win = makeWindow('FaceTime', body, { id: 'facetime', w: 800, h: 600 });
   
   const setupDiv = win.querySelector('#ft-setup');
   const videoArea = win.querySelector('#ft-video-area');
@@ -398,26 +591,29 @@ async function appFaceTime() {
   const remoteVideo = win.querySelector('#ft-remote-video');
   const statusText = win.querySelector('#ft-status');
 
+  let isMuted = false;
+  let isVideoOff = false;
+
   // Request Permissions
   win.querySelector('#ft-allow').onclick = async () => {
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      localVideo.srcObject = localStream;
+      ftStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localVideo.srcObject = ftStream;
       
       win.querySelector('#ft-allow').style.display = 'none';
       win.querySelector('#ft-active').style.display = 'block';
-      win.querySelector('#ft-my-id').textContent = peer.id || 'Connecting...';
+      win.querySelector('#ft-my-id').textContent = ftPeer.id || 'Connecting...';
       
-      peer.on('open', id => {
+      ftPeer.on('open', id => {
         win.querySelector('#ft-my-id').textContent = id;
       });
 
       // Handle incoming calls
-      peer.on('call', call => {
+      ftPeer.on('call', call => {
         if(confirm("Incoming FaceTime call! Answer?")) {
-          call.answer(localStream);
+          call.answer(ftStream);
           setupDiv.style.display = 'none';
-          videoArea.style.display = 'flex';
+          videoArea.style.display = 'block';
           controls.style.display = 'flex';
           
           call.on('stream', remoteStream => {
@@ -430,7 +626,7 @@ async function appFaceTime() {
       });
 
     } catch(err) {
-      alert("Camera/Mic access denied or unavailable. " + err.message);
+      alert("Camera/Mic access denied or unavailable.\n" + err.message);
     }
   };
 
@@ -440,11 +636,11 @@ async function appFaceTime() {
     if(!remoteId) return;
     
     setupDiv.style.display = 'none';
-    videoArea.style.display = 'flex';
+    videoArea.style.display = 'block';
     controls.style.display = 'flex';
     statusText.textContent = "Calling " + remoteId + "...";
 
-    const call = peer.call(remoteId, localStream);
+    const call = ftPeer.call(remoteId, ftStream);
     call.on('stream', remoteStream => {
       remoteVideo.srcObject = remoteStream;
       statusText.textContent = "In Call with " + remoteId;
@@ -455,107 +651,33 @@ async function appFaceTime() {
     });
   };
 
+  // Toggle Controls
+  win.querySelector('#ft-mute-btn').onclick = (e) => {
+    isMuted = !isMuted;
+    ftStream.getAudioTracks()[0].enabled = !isMuted;
+    e.target.classList.toggle('off', isMuted);
+  };
+  win.querySelector('#ft-video-btn').onclick = (e) => {
+    isVideoOff = !isVideoOff;
+    ftStream.getVideoTracks()[0].enabled = !isVideoOff;
+    e.target.classList.toggle('off', isVideoOff);
+  };
+
   // End Call
   win.querySelector('#ft-end').onclick = () => {
-    if(localStream) localStream.getTracks().forEach(t => t.stop());
-    if(peer) peer.destroy();
-    peer = null;
+    if(ftStream) ftStream.getTracks().forEach(t => t.stop());
+    if(ftPeer) ftPeer.destroy();
+    ftPeer = null;
     win.remove();
   };
 }
 
-// 2. Games App
-async function appGames() {
-  const body = `
-    <div style="padding:15px 20px 0;">
-      <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <input id="g-search" class="app-input" style="flex:1;" placeholder="Search 6000+ games...">
-        <button class="app-btn" id="g-add">+ Custom URL</button>
-      </div>
-      <div style="font-size:12px; color:#666; margin-bottom:10px;" id="g-status">Loading archive...</div>
-    </div>
-    <div class="game-grid" id="g-grid"></div>
-    <div style="text-align:center; padding-bottom:20px;" id="g-more"></div>
-  `;
-  
-  const win = makeWindow('Games', body, { id: 'games', w: 900, h: 600 });
-  const grid = win.querySelector('#g-grid');
-  const status = win.querySelector('#g-status');
-  const moreEl = win.querySelector('#g-more');
-  
-  let all = [];
-  let shown = 100;
-
-  function render(filter = '') {
-    const q = filter.toLowerCase();
-    const matches = q ? all.filter(g => (g.name||'').toLowerCase().includes(q)) : all;
-    const slice = q ? matches.slice(0, 300) : matches.slice(0, shown);
-    
-    grid.innerHTML = '';
-    slice.forEach(g => {
-      const d = document.createElement('div');
-      d.className = 'game-tile';
-      d.innerHTML = `<div class="ico">${g.ico || '🎮'}</div><div class="nm">${g.name}</div>`;
-      d.onclick = () => launchGame(g);
-      grid.appendChild(d);
-    });
-    if (matches.length === 0) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666;">No games found.</div>';
-    
-    moreEl.innerHTML = '';
-    if (!q && matches.length > shown) {
-      const btn = document.createElement('button');
-      btn.className = 'app-btn sec';
-      btn.textContent = `Load More (${matches.length - shown} left)`;
-      btn.onclick = () => { shown += 200; render(); };
-      moreEl.appendChild(btn);
-    }
-  }
-
-  win.querySelector('#g-search').oninput = e => render(e.target.value);
-  
-  // Load Local (In case you have data/games.json)
-  try {
-    const r = await fetch('data/games.json');
-    if(r.ok) all = await r.json();
-  } catch(e) { all = []; }
-  
-  // Fallbacks to ensure it works immediately
-  if(all.length === 0) {
-    all = [
-      {name:'Snake', ico:'🐍', type:'inline', fn:'snake'},
-      {name:'Hextris', ico:'⬡', type:'embed', url:'https://hextris.io/'},
-      {name:'2048', ico:'🔢', type:'embed', url:'https://play2048.co/'},
-      {name:'Astray', ico:'🧊', type:'embed', url:'https://wwwtyro.github.io/Astray/'}
-    ];
-  }
-  
-  render();
-  status.textContent = "Fetching archive.org...";
-  
-  // Load Archive (Huge list)
-  try {
-    const colls = ['softwarelibrary_msdos_games', 'internetarcade', 'softwarelibrary_apple_II'];
-    const reqs = colls.map(c => fetch(`https://archive.org/advancedsearch.php?q=collection%3A${c}&fl%5B%5D=identifier&fl%5B%5D=title&rows=500&output=json`).then(r=>r.json()));
-    const res = await Promise.all(reqs);
-    let arch = [];
-    res.forEach(r => {
-      if(r.response && r.response.docs) {
-        r.response.docs.forEach(d => arch.push({
-          name: d.title, ico: '💾', type: 'embed', url: 'https://archive.org/embed/' + d.identifier
-        }));
-      }
-    });
-    all = [...all, ...arch];
-    status.textContent = `Loaded ${all.length} games.`;
-    render();
-  } catch(e) { status.textContent = "Archive failed to load."; }
-}
-
-// 3. Messages App
+// ---------------------------------------------------------
+// APP: MESSAGES (Chat)
+// ---------------------------------------------------------
 function appChat() {
   if (!state.user) {
-    const win = makeWindow('Messages', `<div class="app-pad"><p>Please set a username in Settings first.</p></div>`, {id:'chat', w:400, h:200});
-    return;
+    return makeWindow('Messages', `<div class="app-pad"><h3>No Account</h3><p>Please set a username in Settings first.</p></div>`, {id:'chat', w:400, h:200});
   }
 
   const body = `
@@ -570,7 +692,7 @@ function appChat() {
           <div style="margin:auto; color:#888;">Search for a friend to chat.</div>
         </div>
         <div class="mac-composer">
-          <input id="c-input" placeholder="iMessage" disabled>
+          <input id="c-input" placeholder="iMessage" disabled autocomplete="off">
           <button id="c-send" disabled>↑</button>
         </div>
       </div>
@@ -582,6 +704,7 @@ function appChat() {
   const input = win.querySelector('#c-input');
   const sendBtn = win.querySelector('#c-send');
   let partner = null;
+  let pollInterval = null;
 
   const getUsers = () => JSON.parse(localStorage.getItem('obl_users') || '[]');
   const getMsgs = (a,b) => JSON.parse(localStorage.getItem('obl_chat_' + [a,b].sort().join('__')) || '[]');
@@ -592,10 +715,16 @@ function appChat() {
     sendBtn.disabled = false;
     input.focus();
     
-    // Simple polling for local storage sync
-    setInterval(() => {
-      if (!document.body.contains(win)) return;
+    if(pollInterval) clearInterval(pollInterval);
+    
+    // Polling for local storage sync (cross-tab chat)
+    pollInterval = setInterval(() => {
+      if (!document.body.contains(win)) { clearInterval(pollInterval); return; }
       const m = getMsgs(state.user, partner);
+      // Only update if length changed to prevent cursor jump
+      if(msgsEl.dataset.count == m.length) return;
+      msgsEl.dataset.count = m.length;
+      
       msgsEl.innerHTML = '';
       if(m.length === 0) msgsEl.innerHTML = '<div style="margin:auto; color:#888;">No messages yet.</div>';
       m.forEach(msg => {
@@ -605,7 +734,7 @@ function appChat() {
         msgsEl.appendChild(d);
       });
       msgsEl.scrollTop = msgsEl.scrollHeight;
-    }, 1000);
+    }, 500);
   }
 
   win.querySelector('#c-search').oninput = e => {
@@ -615,7 +744,7 @@ function appChat() {
     if(!q) return;
     getUsers().filter(u => u !== state.user && u.toLowerCase().includes(q)).forEach(u => {
       const d = document.createElement('div');
-      d.style.padding = '8px'; d.style.cursor = 'pointer'; d.style.borderRadius = '6px';
+      d.style.padding = '8px'; d.style.cursor = 'pointer'; d.style.borderRadius = '6px'; d.style.fontSize='13px';
       d.textContent = '@' + u;
       d.onmouseover = () => d.style.background = '#e5e5ea';
       d.onmouseout = () => d.style.background = 'transparent';
@@ -632,14 +761,17 @@ function appChat() {
     m.push({ from: state.user, to: partner, text });
     localStorage.setItem(key, JSON.stringify(m));
     input.value = '';
-    // force refresh
-    win.querySelector('#c-search').dispatchEvent(new Event('input'));
+    // force refresh by resetting data count
+    msgsEl.dataset.count = 0; 
+    openConvo(partner);
   }
   sendBtn.onclick = send;
   input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
 }
 
-// 4. Settings
+// ---------------------------------------------------------
+// APP: SETTINGS
+// ---------------------------------------------------------
 function appSettings() {
   const body = `
     <div class="app-pad">
@@ -663,53 +795,68 @@ function appSettings() {
       localStorage.setItem('obl_user', JSON.stringify(u));
       const users = JSON.parse(localStorage.getItem('obl_users') || '[]');
       if(!users.includes(u)) { users.push(u); localStorage.setItem('obl_users', JSON.stringify(users)); }
-      alert('Username saved!');
+      alert('Username saved! You can now use Messages.');
     }
   };
 }
 
-// 5. Terminal
+// ---------------------------------------------------------
+// APP: TERMINAL
+// ---------------------------------------------------------
 function appTerminal() {
   const body = `
-    <div style="background:#000; color:#fff; font-family:monospace; height:100%; padding:10px; display:flex; flex-direction:column;">
-      <div id="t-out" style="flex:1; overflow:auto; white-space:pre-wrap; font-size:12px;"></div>
-      <div style="display:flex; gap:8px; margin-top:8px;">
-        <span>$</span><input id="t-in" style="flex:1; background:transparent; border:none; color:#fff; outline:none; font-family:monospace;" autocomplete="off">
+    <div class="term-body">
+      <div id="t-out" class="term-out"></div>
+      <div class="term-input-line">
+        <span style="color:#34c759;">user@oblivian ~ %</span>
+        <input id="t-in" autocomplete="off" autofocus>
       </div>
     </div>
   `;
   const win = makeWindow('Terminal', body, {id:'terminal', w:600, h:400});
   const out = win.querySelector('#t-out'), inp = win.querySelector('#t-in');
   const print = s => { out.textContent += s + '\n'; out.scrollTop = out.scrollHeight; };
-  print('Welcome to OblivianOS Terminal');
-  inp.focus();
+  print('Last login: ' + new Date().toUTCString() + ' on ttys000');
+  
+  win.addEventListener('click', () => inp.focus());
   inp.addEventListener('keydown', e => {
     if(e.key === 'Enter') {
       const cmd = inp.value.trim();
       inp.value = '';
-      print('$ ' + cmd);
-      if(cmd === 'help') print('help, neofetch, clear, date');
+      print('user@oblivian ~ % ' + cmd);
+      if(cmd === 'help') print('Available commands:\n  help     Show this message\n  neofetch Show system info\n  clear    Clear terminal\n  date     Show current date');
       else if(cmd === 'clear') out.textContent = '';
       else if(cmd === 'date') print(new Date().toString());
-      else if(cmd === 'neofetch') print('OS: OblivianOS (macOS Theme)\nUser: ' + (state.user||'guest'));
-      else if(cmd !== '') print('command not found');
+      else if(cmd === 'neofetch') {
+        print('       .:                  user@oblivian');
+        print('     .:::.                ---------------');
+        print('   .:::::::.              OS: OblivianOS (macOS Theme)');
+        print('  :::::::::::             Host: Web Browser');
+        print('  :::::::::::             Kernel: JavaScript V8');
+        print('  :::::::::::             Uptime: ' + Math.floor(performance.now()/60000) + ' mins');
+        print('   \':::::::\'              Shell: oblsh');
+        print('     \':::\'                User: ' + (state.user || 'guest'));
+      }
+      else if(cmd !== '') print(`zsh: command not found: ${cmd}`);
     }
   });
-  win.addEventListener('click', () => inp.focus());
+  setTimeout(() => inp.focus(), 100);
 }
 
-// 6. Browser
+// ---------------------------------------------------------
+// APP: SAFARI (Browser)
+// ---------------------------------------------------------
 function appBrowser() {
   const body = `
     <div style="display:flex; flex-direction:column; height:100%;">
-      <div style="padding:8px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; gap:8px;">
-        <input id="url" class="app-input" style="margin:0; flex:1;" placeholder="Search or enter website name">
-        <button class="app-btn" id="go">Go</button>
+      <div style="padding:8px 12px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; gap:8px;">
+        <input id="url" class="app-input" style="margin:0; flex:1; border-radius:16px; background:#e5e5ea; border:none;" placeholder="Search or enter website name">
+        <button class="app-btn" id="go" style="border-radius:16px;">Go</button>
       </div>
-      <iframe id="frame" style="flex:1; border:none; width:100%;"></iframe>
+      <iframe id="frame" style="flex:1; border:none; width:100%; background:#fff;"></iframe>
     </div>
   `;
-  const win = makeWindow('Safari', body, {id:'browser', w:900, h:600});
+  const win = makeWindow('Safari', body, {id:'browser', w:950, h:650});
   const url = win.querySelector('#url'), frame = win.querySelector('#frame');
   win.querySelector('#go').onclick = () => {
     let u = url.value.trim();
@@ -717,26 +864,43 @@ function appBrowser() {
     if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
     frame.src = u;
   };
+  url.addEventListener('keydown', e => { if(e.key === 'Enter') win.querySelector('#go').click(); });
 }
 
-// Launch Game (Handles iframe embeds)
-function launchGame(g) {
-  if(g.type === 'inline') return; // Add custom inline logic here if needed
-  
+// ---------------------------------------------------------
+// APP: MUSIC
+// ---------------------------------------------------------
+function appMusic() {
   const body = `
-    <div style="display:flex; flex-direction:column; height:100%;">
-      <div style="padding:8px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:12px; color:#666; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${g.url}</span>
-        <button class="app-btn sec" onclick="window.open('${g.url}', '_blank')">Open Externally</button>
+    <div class="music-player">
+      <div class="music-art">🎵</div>
+      <h2 style="margin:0; font-size:18px;">Not Playing</h2>
+      <p style="color:#666; margin:5px 0 20px;">Oblivian Audio</p>
+      
+      <audio id="audio-el" controls style="width:100%; max-width:300px; margin:0 auto; display:block;"></audio>
+      
+      <div style="margin-top:20px; text-align:left; max-width:300px; margin-left:auto; margin-right:auto;">
+        <input class="app-input" id="m-url" placeholder="Paste MP3/OGG URL here...">
+        <button class="app-btn" id="m-play" style="width:100%;">Play Stream</button>
       </div>
-      <iframe src="${g.url}" style="flex:1; border:none; width:100%;"></iframe>
     </div>
   `;
-  makeWindow(g.name, body, { w:900, h:600 });
+  const win = makeWindow('Music', body, {id:'music', w:400, h:500});
+  const audio = win.querySelector('#audio-el');
+  
+  win.querySelector('#m-play').onclick = () => {
+    const u = win.querySelector('#m-url').value.trim();
+    if(u) {
+      audio.src = u;
+      audio.play().catch(e => alert("Cannot play this audio URL. Ensure it is a direct link to an MP3/OGG."));
+      win.querySelector('.music-art').textContent = '🎶';
+      win.querySelector('h2').textContent = 'Playing Stream...';
+    }
+  };
 }
 
 /* =========================================================
-   DOCK SETUP (Exact Icons from Image)
+   4. DOCK BUILDER & INITIALIZATION
    ========================================================= */
 const DOCK_APPS = [
   { id: 'finder', icon: '😀', name: 'Finder' },
@@ -752,7 +916,7 @@ const DOCK_APPS = [
   { id: 'reminders', icon: '📝', name: 'Reminders' },
   { id: 'notes', icon: '📒', name: 'Notes' },
   { id: 'tv', icon: '📺', name: 'TV' },
-  { id: 'music', icon: '🎵', name: 'Music' },
+  { id: 'music', icon: '🎵', name: 'Music', fn: appMusic },
   { id: 'podcasts', icon: '🎙️', name: 'Podcasts' },
   { id: 'appstore', icon: '🅰️', name: 'App Store' },
   { id: 'games', icon: '🎮', name: 'Games', fn: appGames },
@@ -765,6 +929,7 @@ const DOCK_APPS = [
 function buildDock() {
   const dock = $('#dock');
   dock.innerHTML = '';
+  
   DOCK_APPS.forEach(app => {
     if(app.divider) {
       const div = document.createElement('div');
@@ -772,35 +937,46 @@ function buildDock() {
       dock.appendChild(div);
       return;
     }
+    
     const d = document.createElement('div');
     d.className = 'dock-item';
     d.dataset.app = app.id;
-    d.innerHTML = `<span class="tooltip">${app.name}</span>${app.icon}`;
+    d.innerHTML = `
+      <span class="tooltip">${app.name}</span>
+      ${app.icon}
+      <div class="dot-indicator"></div>
+    `;
+    
     d.onclick = () => {
       if(app.fn) {
         const existing = openWins[app.id];
         if(existing && document.body.contains(existing)) {
-          if(existing.style.display === 'none') { existing.style.display = 'flex'; existing.style.zIndex = ++zTop; }
-          else { existing.remove(); delete openWins[app.id]; }
+          // Toggle behavior
+          if(existing.style.display === 'none') { 
+            existing.style.display = 'flex'; 
+            existing.style.zIndex = ++zTop; 
+          } else { 
+            existing.style.display = 'none'; 
+          }
           updateDockState();
         } else {
           const win = app.fn();
           if(win) openWins[app.id] = win;
         }
       } else {
-        alert(app.name + " is coming soon!");
+        alert(app.name + " is coming soon in a future update!");
       }
     };
     dock.appendChild(d);
   });
 }
 
-// Initialize
+// Boot sequence
 buildDock();
 setTimeout(() => {
   $('#boot').classList.add('fade');
   setTimeout(() => $('#boot').remove(), 600);
-}, 1500);
+}, 2000); // 2 second fake boot time
 
 </script>
 </body>
