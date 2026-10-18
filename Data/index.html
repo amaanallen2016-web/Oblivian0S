@@ -2,18 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>macOS - Oblivian</title>
+<!-- PeerJS for FaceTime (WebRTC) -->
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
   :root {
     --system-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; user-select: none; }
-  body, html { height: 100%; margin: 0; overflow: hidden; font-family: var(--system-font); }
+  body, html { height: 100%; margin: 0; overflow: hidden; font-family: var(--system-font); background: #000; }
   
-  /* The Forest Wallpaper */
+  /* Wallpaper */
   #wallpaper {
-    position: fixed; inset: 0; z-index: -1;
+    position: fixed; inset: 0; z-index: 0;
     background: url('https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
   }
 
@@ -30,56 +32,65 @@
   .apple-logo { font-size: 16px; margin-right: 5px; }
   .menu-right svg { width: 16px; height: 16px; fill: currentColor; cursor: pointer; }
 
-  /* Left Widgets */
+  /* Left Widgets (Locked Positions) */
   #widgets {
-    position: absolute; top: 50px; left: 20px; z-index: 10;
-    display: flex; flex-direction: column; gap: 16px;
+    position: absolute; top: 50px; left: 30px; z-index: 10;
+    display: flex; flex-direction: column; gap: 15px;
+    pointer-events: none; /* Let clicks pass through to windows */
   }
   .widget {
     background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
     border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); padding: 16px;
     color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    width: 170px; pointer-events: auto;
   }
-  .w-weather { width: 160px; background: linear-gradient(180deg, #3b82f6, #2563eb); border: none; }
+  .w-weather { background: linear-gradient(180deg, #3b82f6, #2563eb); border: none; }
   .w-weather h2 { margin: 0; font-size: 34px; font-weight: 400; }
   .w-weather p { margin: 4px 0; font-size: 14px; font-weight: 500; }
   .w-weather .desc { font-size: 12px; opacity: 0.9; }
-  .w-battery { width: 160px; text-align: center; }
+  
+  .w-battery { text-align: center; }
   .w-battery .ring { width: 60px; height: 60px; border-radius: 50%; border: 6px solid rgba(255,255,255,0.3); border-top-color: #ef4444; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-  .w-calendar { width: 160px; height: 160px; }
+  
+  .w-calendar { height: 160px; }
   .w-calendar .header { color: #ef4444; font-size: 12px; font-weight: 700; text-transform: uppercase; }
   .w-calendar .date { font-size: 40px; font-weight: 300; line-height: 1; margin-top: 5px; color: #000; }
   .w-calendar .event { font-size: 11px; color: #000; margin-top: 10px; }
 
-  /* Center Clock */
+  /* Center Clock (Locked Center) */
   #clock {
-    position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 120px; font-weight: 500; color: #fff; letter-spacing: -4px;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 5;
+    position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 140px; font-weight: 500; color: #fff; letter-spacing: -4px;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 5; pointer-events: none;
+    white-space: nowrap;
   }
 
-  /* Desktop Icons */
+  /* Desktop Icons (Top Right) */
   #desktop-icons {
     position: absolute; top: 50px; right: 20px; z-index: 10;
     display: flex; flex-direction: column; gap: 20px; align-items: center;
+    pointer-events: none;
   }
-  .d-icon { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
-  .d-icon .img { width: 56px; height: 56px; background: rgba(255,255,255,0.8); border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 30px; }
-  .d-icon span { color: #fff; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); text-align: center; }
+  .d-icon { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; pointer-events: auto; }
+  .d-icon .img { width: 60px; height: 60px; background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .d-icon span { color: #fff; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); text-align: center; font-weight: 500;}
 
-  /* Bottom Dock */
+  /* Bottom Dock (Locked Bottom) */
   #dock-container {
     position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 9999;
+    max-width: 100vw;
   }
   #dock {
-    display: flex; gap: 6px; padding: 8px 12px; border-radius: 22px;
+    display: flex; gap: 6px; padding: 8px 12px; border-radius: 24px;
     background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
     border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    align-items: flex-end;
+    align-items: flex-end; overflow-x: auto; overflow-y: hidden; /* Scroll dock if too small */
+    scrollbar-width: none;
   }
+  #dock::-webkit-scrollbar { display: none; }
   .dock-item {
-    width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
-    font-size: 32px; cursor: pointer; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    width: 52px; height: 52px; min-width: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    font-size: 34px; cursor: pointer; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     position: relative;
   }
   .dock-item:hover { transform: scale(1.3) translateY(-10px); margin: 0 6px; }
@@ -89,12 +100,12 @@
     background: rgba(0,0,0,0.6); color: #fff; font-size: 11px; padding: 4px 8px; border-radius: 6px;
     opacity: 0; pointer-events: none; transition: opacity 0.2s; white-space: nowrap;
   }
-  .dock-divider { width: 1px; height: 48px; background: rgba(255,255,255,0.3); margin: 0 6px; align-self: center; }
+  .dock-divider { width: 1px; height: 48px; background: rgba(255,255,255,0.3); margin: 0 6px; align-self: center; min-width: 1px; }
 
   /* Windows */
   #desk-windows { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
   .win {
-    position: absolute; pointer-events: auto; display: flex; flex-direction: column; min-width: 400px; min-height: 300px;
+    position: absolute; pointer-events: auto; display: flex; flex-direction: column; min-width: 350px; min-height: 250px;
     background: #ffffff; border-radius: 12px; overflow: hidden;
     box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1);
     animation: pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -114,7 +125,7 @@
   .tl.close:hover, .tl.min:hover, .tl.max:hover { filter: brightness(0.8); }
   .win-title { flex: 1; text-align: center; font-size: 13px; font-weight: 600; color: #333; margin-right: 50px; }
   
-  .win-body { flex: 1; overflow: auto; background: #fff; color: #333; font-size: 13px; }
+  .win-body { flex: 1; overflow: auto; background: #fff; color: #333; font-size: 13px; display: flex; flex-direction: column;}
 
   /* App UI inside windows */
   .app-pad { padding: 20px; }
@@ -132,8 +143,8 @@
   .game-tile .nm { font-size: 12px; font-weight: 500; color: #333; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
   /* Chat UI */
-  .mac-chat { display: flex; height: 100%; }
-  .mac-chat .side { width: 200px; background: #f6f6f6; border-right: 1px solid #e5e5e5; padding: 10px; overflow-y: auto; }
+  .mac-chat { display: flex; height: 100%; flex: 1; }
+  .mac-chat .side { width: 220px; background: #f6f6f6; border-right: 1px solid #e5e5e5; padding: 10px; overflow-y: auto; }
   .mac-chat .main { flex: 1; display: flex; flex-direction: column; }
   .mac-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
   .mac-msg { max-width: 70%; padding: 8px 12px; border-radius: 16px; font-size: 13px; }
@@ -143,7 +154,20 @@
   .mac-composer input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 16px; outline: none; }
   .mac-composer button { background: #007aff; color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; }
 
-  /* Boot Screen (Fades away instantly on load) */
+  /* FaceTime UI */
+  .ft-container { display: flex; flex-direction: column; height: 100%; background: #1a1a1a; color: #fff; }
+  .ft-video-area { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #000; }
+  .ft-local-video { position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: #333; border-radius: 10px; object-fit: cover; border: 2px solid #555; z-index: 10; }
+  .ft-remote-video { width: 100%; height: 100%; object-fit: cover; }
+  .ft-controls { height: 80px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; gap: 20px; }
+  .ft-btn { width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .ft-btn.end { background: #ff3b30; color: white; }
+  .ft-btn.start { background: #34c759; color: white; }
+  .ft-setup { padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+  .ft-setup input { width: 100%; max-width: 300px; padding: 10px; border-radius: 8px; border: none; text-align: center; font-size: 16px; }
+  .ft-code { font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #007aff; margin: 10px 0; }
+
+  /* Boot Screen */
   #boot { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
   #boot.fade { opacity: 0; pointer-events: none; }
   #boot .apple-logo { font-size: 80px; color: #fff; margin-bottom: 20px; animation: pulse 2s infinite; }
@@ -207,7 +231,7 @@
 <!-- Desktop Icons -->
 <div id="desktop-icons">
   <div class="d-icon">
-    <div class="img" style="background:#e5e5ea">💻</div>
+    <div class="img">💻</div>
     <span>Macintosh HD</span>
   </div>
   <div class="d-icon">
@@ -215,7 +239,7 @@
     <span>Projects</span>
   </div>
   <div class="d-icon">
-    <div class="img" style="background:#fff">📄</div>
+    <div class="img">📄</div>
     <span>Welcome.txt</span>
   </div>
 </div>
@@ -232,23 +256,18 @@
 
 <script>
 /* =========================================================
-   LOGIC & APPS
+   CORE OS LOGIC
    ========================================================= */
-
 const state = {
-  os: 'mac',
   user: JSON.parse(localStorage.getItem('obl_user')) || null
 };
 const $ = s => document.querySelector(s);
 
-// Clock updater
 function updateTime() {
   const now = new Date();
-  const str = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' ' + 
-              now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  $('#menu-clock').textContent = str;
-  const timeOnly = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-  $('#clock').textContent = timeOnly;
+  $('#menu-clock').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' ' + 
+                                 now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  $('#clock').textContent = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
 }
 setInterval(updateTime, 1000);
 updateTime();
@@ -270,9 +289,10 @@ function makeWindow(title, html, opts = {}) {
   win.style.width = (opts.w || 760) + 'px';
   win.style.height = (opts.h || 520) + 'px';
   
+  // Center new windows
   const n = document.querySelectorAll('#desk-windows .win').length;
-  win.style.left = Math.max(10, Math.min(100 + n*20, window.innerWidth - 400)) + 'px';
-  win.style.top = Math.max(40, Math.min(80 + n*20, window.innerHeight - 300)) + 'px';
+  win.style.left = Math.max(10, Math.min(window.innerWidth/2 - (opts.w||760)/2 + n*20, window.innerWidth - 400)) + 'px';
+  win.style.top = Math.max(40, Math.min(window.innerHeight/2 - (opts.h||520)/2 + n*20, window.innerHeight - 300)) + 'px';
   win.style.zIndex = ++zTop;
 
   win.innerHTML = `
@@ -328,7 +348,123 @@ function makeWindow(title, html, opts = {}) {
    APPS
    ========================================================= */
 
-// 1. Games App
+// 1. FaceTime (Real WebRTC via PeerJS)
+let peer = null;
+let localStream = null;
+
+async function appFaceTime() {
+  if (!peer) {
+    peer = new Peer();
+  }
+
+  const body = `
+    <div class="ft-container">
+      <div class="ft-setup" id="ft-setup">
+        <h2 style="margin:0;">FaceTime</h2>
+        <p>To start a call, allow camera/mic access.</p>
+        <button class="app-btn" id="ft-allow" style="background:#34c759;">Allow Camera & Mic</button>
+        
+        <div id="ft-active" style="display:none; text-align:center; width:100%;">
+          <p>Your FaceTime ID:</p>
+          <div class="ft-code" id="ft-my-id">Connecting...</div>
+          <p>Share this ID with a friend to have them call you.</p>
+          
+          <hr style="border-color:#333; margin:20px 0;">
+          
+          <p>Or call a friend:</p>
+          <input type="text" id="ft-remote-id" placeholder="Enter their FaceTime ID">
+          <button class="app-btn" id="ft-call-btn">Call</button>
+        </div>
+      </div>
+      
+      <div class="ft-video-area" id="ft-video-area" style="display:none;">
+        <video id="ft-remote-video" class="ft-remote-video" autoplay></video>
+        <video id="ft-local-video" class="ft-local-video" autoplay muted></video>
+        <div id="ft-status" style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.5); padding:5px 10px; border-radius:10px;">Connecting...</div>
+      </div>
+      
+      <div class="ft-controls" id="ft-controls" style="display:none;">
+        <button class="ft-btn end" id="ft-end">📞</button>
+      </div>
+    </div>
+  `;
+
+  const win = makeWindow('FaceTime', body, { id: 'facetime', w: 700, h: 550 });
+  
+  const setupDiv = win.querySelector('#ft-setup');
+  const videoArea = win.querySelector('#ft-video-area');
+  const controls = win.querySelector('#ft-controls');
+  const localVideo = win.querySelector('#ft-local-video');
+  const remoteVideo = win.querySelector('#ft-remote-video');
+  const statusText = win.querySelector('#ft-status');
+
+  // Request Permissions
+  win.querySelector('#ft-allow').onclick = async () => {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localVideo.srcObject = localStream;
+      
+      win.querySelector('#ft-allow').style.display = 'none';
+      win.querySelector('#ft-active').style.display = 'block';
+      win.querySelector('#ft-my-id').textContent = peer.id || 'Connecting...';
+      
+      peer.on('open', id => {
+        win.querySelector('#ft-my-id').textContent = id;
+      });
+
+      // Handle incoming calls
+      peer.on('call', call => {
+        if(confirm("Incoming FaceTime call! Answer?")) {
+          call.answer(localStream);
+          setupDiv.style.display = 'none';
+          videoArea.style.display = 'flex';
+          controls.style.display = 'flex';
+          
+          call.on('stream', remoteStream => {
+            remoteVideo.srcObject = remoteStream;
+            statusText.textContent = "In Call";
+          });
+        } else {
+          call.close();
+        }
+      });
+
+    } catch(err) {
+      alert("Camera/Mic access denied or unavailable. " + err.message);
+    }
+  };
+
+  // Make a call
+  win.querySelector('#ft-call-btn').onclick = () => {
+    const remoteId = win.querySelector('#ft-remote-id').value.trim();
+    if(!remoteId) return;
+    
+    setupDiv.style.display = 'none';
+    videoArea.style.display = 'flex';
+    controls.style.display = 'flex';
+    statusText.textContent = "Calling " + remoteId + "...";
+
+    const call = peer.call(remoteId, localStream);
+    call.on('stream', remoteStream => {
+      remoteVideo.srcObject = remoteStream;
+      statusText.textContent = "In Call with " + remoteId;
+    });
+    call.on('error', err => {
+      statusText.textContent = "Call failed.";
+      alert("Call failed. Make sure the ID is correct and the other person is online.");
+    });
+  };
+
+  // End Call
+  win.querySelector('#ft-end').onclick = () => {
+    if(localStream) localStream.getTracks().forEach(t => t.stop());
+    if(peer) peer.destroy();
+    peer = null;
+    win.remove();
+  };
+}
+
+// 2. Games App
 async function appGames() {
   const body = `
     <div style="padding:15px 20px 0;">
@@ -377,18 +513,28 @@ async function appGames() {
 
   win.querySelector('#g-search').oninput = e => render(e.target.value);
   
-  // Load Local
+  // Load Local (In case you have data/games.json)
   try {
     const r = await fetch('data/games.json');
     if(r.ok) all = await r.json();
-  } catch(e) { all = [{name:'Snake', ico:'🐍', type:'inline', fn:'snake'}]; }
+  } catch(e) { all = []; }
+  
+  // Fallbacks to ensure it works immediately
+  if(all.length === 0) {
+    all = [
+      {name:'Snake', ico:'🐍', type:'inline', fn:'snake'},
+      {name:'Hextris', ico:'⬡', type:'embed', url:'https://hextris.io/'},
+      {name:'2048', ico:'🔢', type:'embed', url:'https://play2048.co/'},
+      {name:'Astray', ico:'🧊', type:'embed', url:'https://wwwtyro.github.io/Astray/'}
+    ];
+  }
   
   render();
   status.textContent = "Fetching archive.org...";
   
-  // Load Archive
+  // Load Archive (Huge list)
   try {
-    const colls = ['softwarelibrary_msdos_games', 'internetarcade', 'softwarelibrary_apple_II', 'softwarelibrary_atari_2600'];
+    const colls = ['softwarelibrary_msdos_games', 'internetarcade', 'softwarelibrary_apple_II'];
     const reqs = colls.map(c => fetch(`https://archive.org/advancedsearch.php?q=collection%3A${c}&fl%5B%5D=identifier&fl%5B%5D=title&rows=500&output=json`).then(r=>r.json()));
     const res = await Promise.all(reqs);
     let arch = [];
@@ -405,7 +551,7 @@ async function appGames() {
   } catch(e) { status.textContent = "Archive failed to load."; }
 }
 
-// 2. Messages App
+// 3. Messages App
 function appChat() {
   if (!state.user) {
     const win = makeWindow('Messages', `<div class="app-pad"><p>Please set a username in Settings first.</p></div>`, {id:'chat', w:400, h:200});
@@ -493,7 +639,7 @@ function appChat() {
   input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
 }
 
-// 3. Settings
+// 4. Settings
 function appSettings() {
   const body = `
     <div class="app-pad">
@@ -522,7 +668,7 @@ function appSettings() {
   };
 }
 
-// 4. Terminal
+// 5. Terminal
 function appTerminal() {
   const body = `
     <div style="background:#000; color:#fff; font-family:monospace; height:100%; padding:10px; display:flex; flex-direction:column;">
@@ -552,7 +698,7 @@ function appTerminal() {
   win.addEventListener('click', () => inp.focus());
 }
 
-// 5. Browser
+// 6. Browser
 function appBrowser() {
   const body = `
     <div style="display:flex; flex-direction:column; height:100%;">
@@ -573,12 +719,10 @@ function appBrowser() {
   };
 }
 
-// Launch Game
+// Launch Game (Handles iframe embeds)
 function launchGame(g) {
-  if(g.type === 'inline' && g.fn === 'snake') {
-    // Just use a placeholder for snake for now or an iframe
-    return makeWindow('Snake', '<iframe src="https://hextris.io/" style="width:100%;height:100%;border:none;"></iframe>', {w:500, h:500});
-  }
+  if(g.type === 'inline') return; // Add custom inline logic here if needed
+  
   const body = `
     <div style="display:flex; flex-direction:column; height:100%;">
       <div style="padding:8px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; justify-content:space-between; align-items:center;">
@@ -592,7 +736,7 @@ function launchGame(g) {
 }
 
 /* =========================================================
-   DOCK SETUP
+   DOCK SETUP (Exact Icons from Image)
    ========================================================= */
 const DOCK_APPS = [
   { id: 'finder', icon: '😀', name: 'Finder' },
@@ -602,7 +746,7 @@ const DOCK_APPS = [
   { id: 'mail', icon: '✉️', name: 'Mail' },
   { id: 'maps', icon: '🗺️', name: 'Maps' },
   { id: 'photos', icon: '🌸', name: 'Photos' },
-  { id: 'facetime', icon: '📹', name: 'FaceTime' },
+  { id: 'facetime', icon: '📹', name: 'FaceTime', fn: appFaceTime },
   { id: 'calendar', icon: '📅', name: 'Calendar' },
   { id: 'contacts', icon: '👤', name: 'Contacts' },
   { id: 'reminders', icon: '📝', name: 'Reminders' },
@@ -643,6 +787,8 @@ function buildDock() {
           const win = app.fn();
           if(win) openWins[app.id] = win;
         }
+      } else {
+        alert(app.name + " is coming soon!");
       }
     };
     dock.appendChild(d);
