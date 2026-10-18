@@ -127,7 +127,7 @@
   .win-title { flex: 1; text-align: center; font-size: 13px; font-weight: 600; color: #333; margin-right: 50px; }
   .win-body { flex: 1; overflow: auto; background: #fff; color: #333; font-size: 13px; display: flex; flex-direction: column; }
 
-  /* APP UI */
+  /* GENERAL APP UI */
   .app-pad { padding: 20px; }
   .app-btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
   .app-btn:hover { background: #0066cc; }
@@ -181,6 +181,31 @@
   .music-player { padding: 20px; text-align: center; }
   .music-art { width: 150px; height: 150px; background: linear-gradient(45deg, #ff9a9e, #fecfef); border-radius: 10px; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); display: grid; place-items: center; font-size: 60px;}
 
+  /* APPLE TV UI */
+  .tv-body { background: #000; color: #fff; height: 100%; overflow-y: auto; padding-bottom: 30px; font-family: -apple-system, sans-serif;}
+  .tv-hero { height: 250px; position: relative; background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; }
+  .tv-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); }
+  .tv-hero-content { position: relative; z-index: 2; }
+  .tv-hero h2 { margin: 0 0 10px; font-size: 28px; font-weight: 700; }
+  .tv-hero p { margin: 0 0 15px; font-size: 13px; color: #ccc; max-width: 400px; }
+  .tv-btn { background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); }
+  .tv-btn:hover { background: #fff; color: #000; }
+  .tv-row { padding: 20px 20px 0; }
+  .tv-row h3 { margin: 0 0 10px; font-size: 18px; font-weight: 600; color: #fff; }
+  .tv-scroll { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+  .tv-scroll::-webkit-scrollbar { display: none; }
+  .tv-card { min-width: 140px; width: 140px; cursor: pointer; transition: transform 0.2s; }
+  .tv-card:hover { transform: scale(1.05); }
+  .tv-thumb { width: 140px; height: 210px; border-radius: 8px; background-size: cover; background-position: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+  .tv-title { font-size: 12px; color: #ccc; margin-top: 6px; text-align: center; }
+
+  /* FINDER, NOTES, ETC */
+  .finder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 20px; padding: 20px; text-align: center; }
+  .finder-item { cursor: pointer; padding: 10px; border-radius: 8px; }
+  .finder-item:hover { background: rgba(0,0,0,0.05); }
+  .finder-item .icon { font-size: 40px; margin-bottom: 5px; }
+  .notes-textarea { width: 100%; height: 100%; border: none; padding: 20px; font-size: 15px; outline: none; resize: none; font-family: inherit; }
+
   /* BOOT SCREEN */
   #boot { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
   #boot.fade { opacity: 0; pointer-events: none; }
@@ -190,17 +215,10 @@
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   @keyframes load { to { width: 100%; } }
 
-  /* =========================================
-     MOBILE RESPONSIVENESS (Fixes the phone screenshot)
-     ========================================= */
   @media (max-width: 768px) {
-    #widgets { display: none; } /* Hide widgets to save space */
+    #widgets, #desktop-icons { display: none; }
     #clock { font-size: 70px; top: 25%; }
-    #desktop-icons { display: none; } /* Hide desktop icons */
-    .win {
-      width: 100vw !important; height: calc(100vh - 28px) !important;
-      top: 28px !important; left: 0 !important; border-radius: 0; margin: 0;
-    }
+    .win { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; margin: 0; }
     .win-header { border-radius: 0; }
     #dock { max-width: 95vw; overflow-x: auto; }
     .dock-item { width: 45px; height: 45px; min-width: 45px; font-size: 28px; }
@@ -209,15 +227,10 @@
 </head>
 <body>
 
-<!-- Boot Screen -->
-<div id="boot">
-  <div class="apple-logo"></div>
-  <div class="bar"><div></div></div>
-</div>
-
+<div id="boot"><div class="apple-logo"></div><div class="bar"><div></div></div></div>
 <div id="wallpaper"></div>
 
-<!-- Menu Bar -->
+<!-- MENU BAR -->
 <div id="menubar">
   <div class="menu-left">
     <span class="apple-logo"></span>
@@ -237,7 +250,7 @@
   </div>
 </div>
 
-<!-- Widgets -->
+<!-- WIDGETS -->
 <div id="widgets">
   <div class="widget w-weather">
     <h2>67°</h2>
@@ -256,106 +269,68 @@
   </div>
 </div>
 
-<!-- Big Clock -->
 <div id="clock">12:21</div>
 
-<!-- Desktop Icons -->
 <div id="desktop-icons">
-  <div class="d-icon">
-    <div class="img">💻</div>
-    <span>Macintosh HD</span>
-  </div>
-  <div class="d-icon">
-    <div class="img" style="background:#007aff; color:white">📁</div>
-    <span>Projects</span>
-  </div>
-  <div class="d-icon">
-    <div class="img">📄</div>
-    <span>Welcome.txt</span>
-  </div>
+  <div class="d-icon"><div class="img">💻</div><span>Macintosh HD</span></div>
+  <div class="d-icon"><div class="img" style="background:#007aff; color:white">📁</div><span>Projects</span></div>
+  <div class="d-icon"><div class="img">📄</div><span>Welcome.txt</span></div>
 </div>
 
-<!-- Windows Area -->
 <div id="desk-windows"></div>
-
-<!-- Dock -->
-<div id="dock-container">
-  <div id="dock"></div>
-</div>
+<div id="dock-container"><div id="dock"></div></div>
 
 <script>
 /* =========================================================
-   SYSTEM STATE & CLOCK
+   SYSTEM CORE
    ========================================================= */
 const state = { user: JSON.parse(localStorage.getItem('obl_user')) || null };
 const $ = s => document.querySelector(s);
 
 function updateTime() {
   const now = new Date();
-  $('#menu-clock').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' ' + 
-                                 now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  $('#menu-clock').textContent = now.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' ' + now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
   $('#clock').textContent = now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
 }
-setInterval(updateTime, 1000);
-updateTime();
+setInterval(updateTime, 1000); updateTime();
 
-/* =========================================================
-   WINDOW MANAGER
-   ========================================================= */
 let zTop = 1000;
 const openWins = {};
 
 function updateDockState() {
   document.querySelectorAll('.dock-item').forEach(el => {
     const id = el.dataset.app;
-    if (openWins[id] && document.body.contains(openWins[id]) && openWins[id].style.display !== 'none') {
-      el.classList.add('active');
-    } else {
-      el.classList.remove('active');
-    }
+    if (openWins[id] && document.body.contains(openWins[id]) && openWins[id].style.display !== 'none') el.classList.add('active');
+    else el.classList.remove('active');
   });
 }
 
 function makeWindow(title, html, opts = {}) {
   const win = document.createElement('div');
   win.className = 'win';
-  
   if (window.innerWidth > 768) {
-    win.style.width = (opts.w || 760) + 'px';
-    win.style.height = (opts.h || 520) + 'px';
+    win.style.width = (opts.w || 760) + 'px'; win.style.height = (opts.h || 520) + 'px';
     const n = document.querySelectorAll('#desk-windows .win').length;
     win.style.left = Math.max(10, Math.min(window.innerWidth/2 - (opts.w||760)/2 + (n*20), window.innerWidth - 400)) + 'px';
     win.style.top = Math.max(40, Math.min(window.innerHeight/2 - (opts.h||520)/2 + (n*20), window.innerHeight - 300)) + 'px';
   } else {
-    win.style.width = '100vw';
-    win.style.height = 'calc(100vh - 28px)';
-    win.style.left = '0';
-    win.style.top = '28px';
+    win.style.width = '100vw'; win.style.height = 'calc(100vh - 28px)'; win.style.left = '0'; win.style.top = '28px';
   }
-  
   win.style.zIndex = ++zTop;
-
   win.innerHTML = `
     <div class="win-header">
-      <div class="traffic-lights">
-        <div class="tl close" title="Close"></div>
-        <div class="tl min" title="Minimize"></div>
-        <div class="tl max" title="Maximize"></div>
-      </div>
+      <div class="traffic-lights"><div class="tl close"></div><div class="tl min"></div><div class="tl max"></div></div>
       <div class="win-title">${title}</div>
     </div>
     <div class="win-body">${html}</div>
   `;
-
   document.getElementById('desk-windows').appendChild(win);
 
-  // Drag Logic
   const head = win.querySelector('.win-header');
   let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
   head.addEventListener('pointerdown', e => {
     if (e.target.closest('.tl') || window.innerWidth <= 768) return;
-    dragging = true; sx = e.clientX; sy = e.clientY;
-    ox = parseFloat(win.style.left); oy = parseFloat(win.style.top);
+    dragging = true; sx = e.clientX; sy = e.clientY; ox = parseFloat(win.style.left); oy = parseFloat(win.style.top);
     head.setPointerCapture(e.pointerId);
   });
   head.addEventListener('pointermove', e => {
@@ -364,31 +339,118 @@ function makeWindow(title, html, opts = {}) {
     win.style.top = Math.max(28, Math.min(window.innerHeight - 60, oy + e.clientY - sy)) + 'px';
   });
   head.addEventListener('pointerup', () => { dragging = false; });
-
   win.addEventListener('pointerdown', () => { win.style.zIndex = ++zTop; });
 
-  // Controls
   win.querySelector('.close').onclick = () => { win.remove(); delete openWins[opts.id]; updateDockState(); };
   win.querySelector('.min').onclick = () => { win.style.display = 'none'; updateDockState(); };
   win.querySelector('.max').onclick = () => {
-    if (win.style.width === '100vw') {
-      win.style.width = (opts.w || 760) + 'px'; win.style.height = (opts.h || 520) + 'px';
-      win.style.left = '100px'; win.style.top = '100px';
-    } else {
-      win.style.width = '100vw'; win.style.height = 'calc(100vh - 28px)';
-      win.style.left = '0'; win.style.top = '28px';
-    }
+    if (win.style.width === '100vw') { win.style.width = (opts.w || 760) + 'px'; win.style.height = (opts.h || 520) + 'px'; win.style.left = '100px'; win.style.top = '100px'; }
+    else { win.style.width = '100vw'; win.style.height = 'calc(100vh - 28px)'; win.style.left = '0'; win.style.top = '28px'; }
   };
-
   updateDockState();
   return win;
 }
 
 /* =========================================================
-   APPS
+   APP: APPLE TV (Movies, Anime, Viral)
    ========================================================= */
+function appAppleTV() {
+  const body = `
+    <div class="tv-body">
+      <!-- Hero Banner -->
+      <div class="tv-hero" style="background-image: url('https://img.youtube.com/vi/szby7ZHLnkA/maxresdefault.jpg');">
+        <div class="tv-hero-content">
+          <h2>Sonic the Hedgehog</h2>
+          <p>After discovering a small, blue, fast hedgehog, a small-town police officer must help him defeat an evil genius who wants to do experiments on him.</p>
+          <button class="tv-btn" onclick="playTVVideo('szby7ZHLnkA', 'Sonic the Hedgehog')">▶ Play Trailer</button>
+        </div>
+      </div>
 
-// APP: GAMES
+      <!-- Rows -->
+      <div class="tv-row">
+        <h3>Trending Now</h3>
+        <div class="tv-scroll" id="tv-trending"></div>
+      </div>
+
+      <div class="tv-row">
+        <h3>Viral & Internet Lore</h3>
+        <div class="tv-scroll" id="tv-viral"></div>
+      </div>
+
+      <div class="tv-row">
+        <h3>Anime & Animation</h3>
+        <div class="tv-scroll" id="tv-anime"></div>
+      </div>
+      
+      <div class="tv-row">
+        <h3>Blockbuster Movies</h3>
+        <div class="tv-scroll" id="tv-movies"></div>
+      </div>
+    </div>
+  `;
+
+  const win = makeWindow('Apple TV', body, { id: 'appletv', w: 950, h: 650 });
+  
+  const categories = {
+    'tv-trending': [
+      { title: 'The Amazing Digital Circus', id: 'HwAPLk_sQ3w', img: 'HwAPLk_sQ3w' },
+      { title: 'Skibidi Toilet', id: 'VsKXdP8m8X8', img: 'VsKXdP8m8X8' },
+      { title: 'FNAF Movie Trailer', id: '0VH9WCFV6XQ', img: '0VH9WCFV6XQ' },
+      { title: 'Barbie', id: 'pBk4NYhWNMM', img: 'pBk4NYhWNMM' }
+    ],
+    'tv-viral': [
+      { title: 'The Backrooms (Found Footage)', id: 'H4dGpz6cnHo', img: 'H4dGpz6cnHo' },
+      { title: 'Backrooms: The Movie', id: '5uXp0QK9p8s', img: '5uXp0QK9p8s' },
+      { title: 'Mandela Catalogue', id: '8Hq3j0k2m3Q', img: '8Hq3j0k2m3Q' },
+      { title: 'Gemini Home Entertainment', id: '7T3c8yB1n8M', img: '7T3c8yB1n8M' }
+    ],
+    'tv-anime': [
+      { title: 'Demon Slayer', id: 'ATJYac_dORw', img: 'ATJYac_dORw' },
+      { title: 'Jujutsu Kaisen', id: 'pkKu9hLT-t8', img: 'pkKu9hLT-t8' },
+      { title: 'Attack on Titan', id: 'MGRm4IzK1SQ', img: 'MGRm4IzK1SQ' },
+      { title: 'One Piece', id: 'Ades3pQbeh8', img: 'Ades3pQbeh8' },
+      { title: 'Spy x Family', id: 'ofXigq9aIpo', img: 'ofXigq9aIpo' }
+    ],
+    'tv-movies': [
+      { title: 'Dune: Part Two', id: 'Way9Dexny3w', img: 'Way9Dexny3w' },
+      { title: 'Spider-Man: Across the Spider-Verse', id: 'shW9i6k8cB0', img: 'shW9i6k8cB0' },
+      { title: 'Oppenheimer', id: 'uYPbbksJxIg', img: 'uYPbbksJxIg' },
+      { title: 'John Wick 4', id: 'qEVUtrk8_B4', img: 'qEVUtrk8_B4' }
+    ]
+  };
+
+  for (const [containerId, items] of Object.entries(categories)) {
+    const container = win.querySelector('#' + containerId);
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'tv-card';
+      card.innerHTML = `
+        <div class="tv-thumb" style="background-image: url('https://img.youtube.com/vi/${item.img}/hqdefault.jpg')"></div>
+        <div class="tv-title">${item.title}</div>
+      `;
+      card.onclick = () => playTVVideo(item.id, item.title);
+      container.appendChild(card);
+    });
+  }
+
+  // Expose play function to the window scope
+  window.playTVVideo = (id, title) => {
+    const playerBody = `
+      <div style="display:flex; flex-direction:column; height:100%; background:#000;">
+        <div style="padding:10px; background:#1a1a1a; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:600;">${title}</span>
+          <button class="app-btn sec" onclick="window.open('https://youtube.com/watch?v=${id}', '_blank')">Watch on YouTube</button>
+        </div>
+        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="flex:1; border:none;"></iframe>
+      </div>
+    `;
+    makeWindow(title, playerBody, { w: 900, h: 550 });
+  };
+}
+
+/* =========================================================
+   APP: GAMES (6,000+ with GTA V)
+   ========================================================= */
 async function appGames() {
   const body = `
     <div style="padding:15px 20px 0;">
@@ -403,13 +465,10 @@ async function appGames() {
   `;
   
   const win = makeWindow('Games', body, { id: 'games', w: 950, h: 650 });
-  const grid = win.querySelector('#g-grid');
-  const status = win.querySelector('#g-status');
-  const moreEl = win.querySelector('#g-more');
+  const grid = win.querySelector('#g-grid'), status = win.querySelector('#g-status'), moreEl = win.querySelector('#g-more');
   
   let allGames = [];
-  let displayedCount = 100;
-  let searchQuery = '';
+  let displayedCount = 100, searchQuery = '';
 
   function render() {
     const q = searchQuery.toLowerCase();
@@ -425,60 +484,43 @@ async function appGames() {
       grid.appendChild(d);
     });
     
-    if (matches.length === 0) {
-      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666;padding:20px;">No games found.</div>';
-    }
+    if (matches.length === 0) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666;padding:20px;">No games found.</div>';
     
     moreEl.innerHTML = '';
     if (!q && matches.length > displayedCount) {
       const btn = document.createElement('button');
       btn.className = 'app-btn sec';
       btn.textContent = `Load More (${matches.length - displayedCount} games left)`;
-      btn.onclick = () => { 
-        displayedCount += 200; 
-        render(); 
-        win.querySelector('.win-body').scrollTop = win.querySelector('.win-body').scrollHeight;
-      };
+      btn.onclick = () => { displayedCount += 200; render(); win.querySelector('.win-body').scrollTop = win.querySelector('.win-body').scrollHeight; };
       moreEl.appendChild(btn);
     }
   }
 
-  win.querySelector('#g-search').oninput = e => {
-    searchQuery = e.target.value;
-    render();
-  };
-  
+  win.querySelector('#g-search').oninput = e => { searchQuery = e.target.value; render(); };
   win.querySelector('#g-add').onclick = () => {
     const u = prompt('Enter Game URL (must allow embedding):');
     if (u) launchGame({ name: 'Custom Game', ico: '🔗', url: u });
   };
 
-  // GTA V
   allGames.push({ name: 'GTA V (Fan Project)', ico: '🚗', type: 'embed', url: 'https://eta5.vercel.app/play?artwork=regular' });
-  
-  // Featured
   allGames.push(
     {name:'Snake', ico:'🐍', type:'inline', fn:'snake'},
     {name:'Hextris', ico:'⬡', type:'embed', url:'https://hextris.io/'},
     {name:'2048', ico:'🔢', type:'embed', url:'https://play2048.co/'},
-    {name:'Astray', ico:'🧊', type:'embed', url:'https://wwwtyro.github.io/Astray/'},
     {name:'Doom', ico:'👹', type:'embed', url:'https://archive.org/embed/doom-play'}
   );
   render(); 
 
   status.textContent = "Fetching archive.org (this may take a moment)...";
   try {
-    const collections = ['softwarelibrary_msdos_games', 'internetarcade', 'softwarelibrary_apple_II', 'softwarelibrary_atari_2600'];
+    const collections = ['softwarelibrary_msdos_games', 'internetarcade', 'softwarelibrary_apple_II'];
     const requests = collections.map(c => fetch(`https://archive.org/advancedsearch.php?q=collection%3A${c}&fl%5B%5D=identifier&fl%5B%5D=title&rows=500&output=json`).then(r => r.json()).catch(() => null));
     const results = await Promise.all(requests);
-    
     let archiveGames = [];
     results.forEach(data => {
       if(data && data.response && data.response.docs) {
         data.response.docs.forEach(doc => {
-          if(doc.title && doc.identifier) {
-            archiveGames.push({ name: doc.title, ico: '💾', type: 'embed', url: 'https://archive.org/embed/' + doc.identifier });
-          }
+          if(doc.title && doc.identifier) archiveGames.push({ name: doc.title, ico: '💾', type: 'embed', url: 'https://archive.org/embed/' + doc.identifier });
         });
       }
     });
@@ -488,81 +530,37 @@ async function appGames() {
   } catch(e) { status.textContent = `Loaded ${allGames.length} games (archive failed).`; }
 }
 
-// GAME LAUNCHER & SNAKE LOGIC
 function launchGame(g) {
   if (g.type === 'inline' && g.fn === 'snake') {
     const body = `
       <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:#111;">
         <canvas id="snake-canvas" width="400" height="400" style="background:#222; border-radius:8px; box-shadow:0 0 20px rgba(0,255,0,0.2);"></canvas>
-        <div style="color:#fff; margin-top:15px; font-family:monospace;">Use Arrow Keys or WASD to move</div>
+        <div style="color:#fff; margin-top:15px; font-family:monospace;">Use Arrow Keys or WASD</div>
       </div>
     `;
     const win = makeWindow('Snake', body, { w: 500, h: 520 });
-    
-    // Snake Game Engine
-    const canvas = win.querySelector('#snake-canvas');
-    const ctx = canvas.getContext('2d');
+    const canvas = win.querySelector('#snake-canvas'), ctx = canvas.getContext('2d');
     const box = 20;
-    let snake = [{x: 10 * box, y: 10 * box}];
-    let direction = 'RIGHT';
+    let snake = [{x: 10 * box, y: 10 * box}], direction = 'RIGHT';
     let food = { x: Math.floor(Math.random()*19+1) * box, y: Math.floor(Math.random()*19+1) * box };
-    let score = 0;
-    let gameLoop;
+    let score = 0, gameLoop;
 
     function draw() {
-      ctx.fillStyle = '#222';
-      ctx.fillRect(0, 0, 400, 400);
-      
-      // Draw snake
-      snake.forEach((segment, index) => {
-        ctx.fillStyle = index === 0 ? '#34c759' : '#007aff';
-        ctx.fillRect(segment.x, segment.y, box-2, box-2);
-      });
-
-      // Draw food
-      ctx.fillStyle = '#ff3b30';
-      ctx.fillRect(food.x, food.y, box-2, box-2);
-      
-      // Score
-      ctx.fillStyle = '#fff';
-      ctx.font = '20px monospace';
-      ctx.fillText('Score: ' + score, 10, 30);
+      ctx.fillStyle = '#222'; ctx.fillRect(0, 0, 400, 400);
+      snake.forEach((segment, index) => { ctx.fillStyle = index === 0 ? '#34c759' : '#007aff'; ctx.fillRect(segment.x, segment.y, box-2, box-2); });
+      ctx.fillStyle = '#ff3b30'; ctx.fillRect(food.x, food.y, box-2, box-2);
+      ctx.fillStyle = '#fff'; ctx.font = '20px monospace'; ctx.fillText('Score: ' + score, 10, 30);
     }
-
     function update() {
       const head = { ...snake[0] };
-      if (direction === 'LEFT') head.x -= box;
-      if (direction === 'RIGHT') head.x += box;
-      if (direction === 'UP') head.y -= box;
-      if (direction === 'DOWN') head.y += box;
-
-      // Wall collision
-      if (head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400) {
-        clearInterval(gameLoop);
-        alert('Game Over! Score: ' + score);
-        return;
-      }
-
-      // Self collision
-      for (let i = 1; i < snake.length; i++) {
-        if (head.x === snake[i].x && head.y === snake[i].y) {
-          clearInterval(gameLoop);
-          alert('Game Over! Score: ' + score);
-          return;
-        }
-      }
-
-      // Food collision
-      if (head.x === food.x && head.y === food.y) {
-        score += 10;
-        food = { x: Math.floor(Math.random()*19+1) * box, y: Math.floor(Math.random()*19+1) * box };
-      } else {
-        snake.pop();
-      }
-      snake.unshift(head);
-      draw();
+      if (direction === 'LEFT') head.x -= box; if (direction === 'RIGHT') head.x += box;
+      if (direction === 'UP') head.y -= box; if (direction === 'DOWN') head.y += box;
+      if (head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400) { clearInterval(gameLoop); alert('Game Over! Score: ' + score); return; }
+      for (let i = 1; i < snake.length; i++) { if (head.x === snake[i].x && head.y === snake[i].y) { clearInterval(gameLoop); alert('Game Over! Score: ' + score); return; } }
+      if (head.x === food.x && head.y === food.y) { score += 10; food = { x: Math.floor(Math.random()*19+1) * box, y: Math.floor(Math.random()*19+1) * box }; } 
+      else { snake.pop(); }
+      snake.unshift(head); draw();
     }
-
     win.addEventListener('keydown', (e) => {
       const key = e.key.toLowerCase();
       if ((key === 'arrowleft' || key === 'a') && direction !== 'RIGHT') direction = 'LEFT';
@@ -570,19 +568,11 @@ function launchGame(g) {
       if ((key === 'arrowup' || key === 'w') && direction !== 'DOWN') direction = 'UP';
       if ((key === 'arrowdown' || key === 's') && direction !== 'UP') direction = 'DOWN';
     });
-
-    draw();
-    gameLoop = setInterval(update, 120);
-    
-    // Stop loop if window closes
-    const obs = new MutationObserver(() => {
-      if (!document.body.contains(win)) { clearInterval(gameLoop); obs.disconnect(); }
-    });
+    draw(); gameLoop = setInterval(update, 120);
+    const obs = new MutationObserver(() => { if (!document.body.contains(win)) { clearInterval(gameLoop); obs.disconnect(); } });
     obs.observe(document.body, { childList: true, subtree: true });
     return;
   }
-  
-  // Standard embed
   const body = `
     <div style="display:flex; flex-direction:column; height:100%;">
       <div style="padding:8px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; justify-content:space-between; align-items:center;">
@@ -595,88 +585,45 @@ function launchGame(g) {
   makeWindow(g.name, body, { w: 950, h: 650 });
 }
 
-// APP: DOBLOX (Three.js 3D Engine)
+/* =========================================================
+   APP: DOBLOX (3D)
+   ========================================================= */
 function appDoblox() {
-  const body = `
-    <div id="doblox-container" style="width:100%; height:100%; position:relative; background:#87CEEB; overflow:hidden;">
-      <div style="position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.8); padding:10px; border-radius:8px; font-weight:bold; font-family:monospace; z-index:10;">
-        Doblox Studio<br>
-        <span style="font-size:11px; font-weight:normal;">WASD to move the block</span>
-      </div>
-    </div>
-  `;
+  const body = `<div id="doblox-container" style="width:100%; height:100%; position:relative; background:#87CEEB; overflow:hidden;"><div style="position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.8); padding:10px; border-radius:8px; font-weight:bold; font-family:monospace; z-index:10;">Doblox Studio<br><span style="font-size:11px; font-weight:normal;">WASD to move</span></div></div>`;
   const win = makeWindow('Doblox Studio', body, {id:'doblox', w:800, h:600});
   const container = win.querySelector('#doblox-container');
 
-  // Three.js Setup
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x87CEEB); // Sky blue
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x87CEEB);
   const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  container.appendChild(renderer.domElement);
+  const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(container.clientWidth, container.clientHeight); container.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6)); const dirLight = new THREE.DirectionalLight(0xffffff, 0.8); dirLight.position.set(10, 20, 10); scene.add(dirLight);
+  const gridHelper = new THREE.GridHelper(50, 50, 0x000000, 0x444444); scene.add(gridHelper);
+  
+  const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.5 }));
+  cube.position.y = 1; scene.add(cube);
+  camera.position.set(0, 5, 10); camera.lookAt(cube.position);
 
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-  scene.add(ambientLight);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  dirLight.position.set(10, 20, 10);
-  scene.add(dirLight);
-
-  // The "Baseplate" (Grid)
-  const gridHelper = new THREE.GridHelper(50, 50, 0x000000, 0x444444);
-  scene.add(gridHelper);
-
-  // A green "Brick" (Roblox style)
-  const geometry = new THREE.BoxGeometry(2, 2, 2);
-  const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.5 });
-  const cube = new THREE.Mesh(geometry, material);
-  cube.position.y = 1; // sit on the grid
-  scene.add(cube);
-
-  // Camera position
-  camera.position.set(0, 5, 10);
-  camera.lookAt(cube.position);
-
-  // Movement Logic
   const keys = { w: false, a: false, s: false, d: false };
   win.addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); if(keys.hasOwnProperty(k)) keys[k] = true; });
   win.addEventListener('keyup', (e) => { const k = e.key.toLowerCase(); if(keys.hasOwnProperty(k)) keys[k] = false; });
 
-  // Animation Loop
   let reqId;
   function animate() {
     reqId = requestAnimationFrame(animate);
-    
-    // Move cube
-    if(keys.w) cube.position.z -= 0.2;
-    if(keys.s) cube.position.z += 0.2;
-    if(keys.a) cube.position.x -= 0.2;
-    if(keys.d) cube.position.x += 0.2;
-    
-    // Camera follows
-    camera.position.x = cube.position.x;
-    camera.position.z = cube.position.z + 10;
-    camera.lookAt(cube.position);
-
+    if(keys.w) cube.position.z -= 0.2; if(keys.s) cube.position.z += 0.2;
+    if(keys.a) cube.position.x -= 0.2; if(keys.d) cube.position.x += 0.2;
+    camera.position.x = cube.position.x; camera.position.z = cube.position.z + 10; camera.lookAt(cube.position);
     renderer.render(scene, camera);
   }
   animate();
-
-  // Cleanup on close
-  const obs = new MutationObserver(() => {
-    if (!document.body.contains(win)) { 
-      cancelAnimationFrame(reqId); 
-      renderer.dispose(); 
-      obs.disconnect(); 
-    }
-  });
+  const obs = new MutationObserver(() => { if (!document.body.contains(win)) { cancelAnimationFrame(reqId); renderer.dispose(); obs.disconnect(); } });
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
-// APP: FACETIME
-let ftPeer = null;
-let ftStream = null;
+/* =========================================================
+   APP: FACETIME
+   ========================================================= */
+let ftPeer = null, ftStream = null;
 async function appFaceTime() {
   if (!ftPeer) ftPeer = new Peer();
   const body = `
@@ -718,36 +665,33 @@ async function appFaceTime() {
     try {
       ftStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       localVideo.srcObject = ftStream;
-      win.querySelector('#ft-allow').style.display = 'none';
-      win.querySelector('#ft-active').style.display = 'block';
+      win.querySelector('#ft-allow').style.display = 'none'; win.querySelector('#ft-active').style.display = 'block';
       win.querySelector('#ft-my-id').textContent = ftPeer.id || 'Connecting...';
       ftPeer.on('open', id => { win.querySelector('#ft-my-id').textContent = id; });
       ftPeer.on('call', call => {
         if(confirm("Incoming FaceTime call! Answer?")) {
-          call.answer(ftStream);
-          setupDiv.style.display = 'none'; videoArea.style.display = 'block'; controls.style.display = 'flex';
+          call.answer(ftStream); setupDiv.style.display = 'none'; videoArea.style.display = 'block'; controls.style.display = 'flex';
           call.on('stream', remoteStream => { remoteVideo.srcObject = remoteStream; statusText.textContent = "In Call"; });
         } else { call.close(); }
       });
     } catch(err) { alert("Camera/Mic access denied.\n" + err.message); }
   };
-
   win.querySelector('#ft-call-btn').onclick = () => {
-    const remoteId = win.querySelector('#ft-remote-id').value.trim();
-    if(!remoteId) return;
+    const remoteId = win.querySelector('#ft-remote-id').value.trim(); if(!remoteId) return;
     setupDiv.style.display = 'none'; videoArea.style.display = 'block'; controls.style.display = 'flex';
     statusText.textContent = "Calling " + remoteId + "...";
     const call = ftPeer.call(remoteId, ftStream);
     call.on('stream', remoteStream => { remoteVideo.srcObject = remoteStream; statusText.textContent = "In Call with " + remoteId; });
     call.on('error', err => { statusText.textContent = "Call failed."; alert("Call failed. Ensure ID is correct."); });
   };
-
   win.querySelector('#ft-mute-btn').onclick = (e) => { isMuted = !isMuted; ftStream.getAudioTracks()[0].enabled = !isMuted; e.target.classList.toggle('off', isMuted); };
   win.querySelector('#ft-video-btn').onclick = (e) => { isVideoOff = !isVideoOff; ftStream.getVideoTracks()[0].enabled = !isVideoOff; e.target.classList.toggle('off', isVideoOff); };
   win.querySelector('#ft-end').onclick = () => { if(ftStream) ftStream.getTracks().forEach(t => t.stop()); if(ftPeer) ftPeer.destroy(); ftPeer = null; win.remove(); };
 }
 
-// APP: MESSAGES
+/* =========================================================
+   APP: MESSAGES
+   ========================================================= */
 function appChat() {
   if (!state.user) return makeWindow('Messages', `<div class="app-pad"><h3>No Account</h3><p>Please set a username in Settings first.</p></div>`, {id:'chat', w:400, h:200});
   const body = `
@@ -759,10 +703,7 @@ function appChat() {
       </div>
       <div class="main">
         <div class="mac-msgs" id="c-msgs"><div style="margin:auto; color:#888;">Search for a friend to chat.</div></div>
-        <div class="mac-composer">
-          <input id="c-input" placeholder="iMessage" disabled autocomplete="off">
-          <button id="c-send" disabled>↑</button>
-        </div>
+        <div class="mac-composer"><input id="c-input" placeholder="iMessage" disabled autocomplete="off"><button id="c-send" disabled>↑</button></div>
       </div>
     </div>
   `;
@@ -783,24 +724,18 @@ function appChat() {
       msgsEl.dataset.count = m.length;
       msgsEl.innerHTML = m.length === 0 ? '<div style="margin:auto; color:#888;">No messages yet.</div>' : '';
       m.forEach(msg => {
-        const d = document.createElement('div');
-        d.className = 'mac-msg ' + (msg.from === state.user ? 'me' : 'them');
-        d.textContent = msg.text;
-        msgsEl.appendChild(d);
+        const d = document.createElement('div'); d.className = 'mac-msg ' + (msg.from === state.user ? 'me' : 'them'); d.textContent = msg.text; msgsEl.appendChild(d);
       });
       msgsEl.scrollTop = msgsEl.scrollHeight;
     }, 500);
   }
 
   win.querySelector('#c-search').oninput = e => {
-    const q = e.target.value.toLowerCase(), res = win.querySelector('#c-results');
-    res.innerHTML = '';
+    const q = e.target.value.toLowerCase(), res = win.querySelector('#c-results'); res.innerHTML = '';
     if(!q) return;
     getUsers().filter(u => u !== state.user && u.toLowerCase().includes(q)).forEach(u => {
-      const d = document.createElement('div');
-      d.style.cssText = 'padding:8px; cursor:pointer; border-radius:6px; font-size:13px;';
-      d.textContent = '@' + u;
-      d.onmouseover = () => d.style.background = '#e5e5ea'; d.onmouseout = () => d.style.background = 'transparent';
+      const d = document.createElement('div'); d.style.cssText = 'padding:8px; cursor:pointer; border-radius:6px; font-size:13px;';
+      d.textContent = '@' + u; d.onmouseover = () => d.style.background = '#e5e5ea'; d.onmouseout = () => d.style.background = 'transparent';
       d.onclick = () => openConvo(u); res.appendChild(d);
     });
   };
@@ -811,39 +746,150 @@ function appChat() {
     localStorage.setItem('obl_chat_' + [state.user, partner].sort().join('__'), JSON.stringify(m));
     input.value = ''; msgsEl.dataset.count = 0; openConvo(partner);
   }
-  sendBtn.onclick = send;
-  input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
+  sendBtn.onclick = send; input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
 }
 
-// APP: SETTINGS
-function appSettings() {
+/* =========================================================
+   APP: NOTES
+   ========================================================= */
+function appNotes() {
+  const saved = localStorage.getItem('obl_notes') || '';
+  const body = `<textarea class="notes-textarea" id="note-input" placeholder="Start typing...">${saved}</textarea>`;
+  const win = makeWindow('Notes', body, {id:'notes', w:600, h:500});
+  win.querySelector('#note-input').addEventListener('input', (e) => { localStorage.setItem('obl_notes', e.target.value); });
+}
+
+/* =========================================================
+   APP: REMINDERS
+   ========================================================= */
+function appReminders() {
   const body = `
     <div class="app-pad">
-      <h3>Account</h3>
-      <input class="app-input" id="s-user" placeholder="Username" value="${state.user || ''}">
-      <button class="app-btn" id="s-save">Save</button>
+      <div style="display:flex; gap:10px; margin-bottom:20px;">
+        <input class="app-input" id="rem-input" placeholder="Add a reminder..." style="margin:0;">
+        <button class="app-btn" id="rem-add">Add</button>
+      </div>
+      <div id="rem-list"></div>
     </div>
   `;
+  const win = makeWindow('Reminders', body, {id:'reminders', w:500, h:500});
+  const list = win.querySelector('#rem-list');
+  let rems = JSON.parse(localStorage.getItem('obl_reminders') || '[]');
+
+  function render() {
+    list.innerHTML = '';
+    rems.forEach((r, i) => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer;';
+      div.innerHTML = `<input type="checkbox" ${r.done ? 'checked' : ''}><span style="${r.done ? 'text-decoration:line-through; color:#aaa;' : ''}">${r.text}</span>`;
+      div.querySelector('input').onchange = (e) => { rems[i].done = e.target.checked; localStorage.setItem('obl_reminders', JSON.stringify(rems)); render(); };
+      list.appendChild(div);
+    });
+  }
+  win.querySelector('#rem-add').onclick = () => {
+    const v = win.querySelector('#rem-input').value.trim(); if(!v) return;
+    rems.push({ text: v, done: false }); localStorage.setItem('obl_reminders', JSON.stringify(rems));
+    win.querySelector('#rem-input').value = ''; render();
+  };
+  render();
+}
+
+/* =========================================================
+   APP: PHOTOS
+   ========================================================= */
+function appPhotos() {
+  const imgs = [
+    'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400',
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400',
+    'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=400',
+    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=400',
+    'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400',
+    'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400'
+  ];
+  const body = `<div class="app-pad" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+    ${imgs.map(src => `<img src="${src}" style="width:100%; border-radius:8px; object-fit:cover; aspect-ratio:1;">`).join('')}
+  </div>`;
+  makeWindow('Photos', body, {id:'photos', w:600, h:500});
+}
+
+/* =========================================================
+   APP: MAPS
+   ========================================================= */
+function appMaps() {
+  const body = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=-122.0529%2C37.3200%2C-122.0200%2C37.3400&amp;layer=mapnik" style="border: none;"></iframe>`;
+  makeWindow('Maps', body, {id:'maps', w:800, h:600});
+}
+
+/* =========================================================
+   APP: MAIL
+   ========================================================= */
+function appMail() {
+  const body = `
+    <div style="display:flex; height:100%;">
+      <div style="width:200px; background:#f6f6f6; border-right:1px solid #e5e5e5; padding:10px;">
+        <div style="font-weight:bold; color:var(--accent); padding:10px; cursor:pointer;">Inbox (3)</div>
+        <div style="padding:10px; color:#666; cursor:pointer;">Sent</div>
+        <div style="padding:10px; color:#666; cursor:pointer;">Drafts</div>
+      </div>
+      <div style="flex:1; padding:20px;">
+        <h2 style="margin:0 0 10px;">Welcome to OblivianOS</h2>
+        <p style="color:#666; font-size:12px;">From: Apple &lt;no-reply@apple.com&gt;</p>
+        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+        <p>Your new Mac is ready. Explore the dock to find apps like Safari, Messages, and Apple TV.</p>
+      </div>
+    </div>
+  `;
+  makeWindow('Mail', body, {id:'mail', w:700, h:500});
+}
+
+/* =========================================================
+   APP: CALENDAR
+   ========================================================= */
+function appCalendar() {
+  const body = `
+    <div class="app-pad">
+      <h2 style="margin-top:0;">October 2026</h2>
+      <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; text-align:center;">
+        ${['S','M','T','W','T','F','S'].map(d => `<div style="font-weight:bold; font-size:12px; color:#666;">${d}</div>`).join('')}
+        ${Array(4).fill('<div></div>').join('')}
+        ${Array.from({length: 31}, (_, i) => `<div style="padding:10px; border-radius:5px; background:${i+1 === 18 ? 'var(--accent)' : '#f6f6f6'}; color:${i+1 === 18 ? '#fff' : '#333'};">${i+1}</div>`).join('')}
+      </div>
+    </div>
+  `;
+  makeWindow('Calendar', body, {id:'calendar', w:500, h:400});
+}
+
+/* =========================================================
+   APP: FINDER
+   ========================================================= */
+function appFinder() {
+  const body = `
+    <div class="finder-grid">
+      <div class="finder-item"><div class="icon">📁</div>Documents</div>
+      <div class="finder-item"><div class="icon">📁</div>Downloads</div>
+      <div class="finder-item"><div class="icon">📁</div>Desktop</div>
+      <div class="finder-item"><div class="icon">🖼️</div>Pictures</div>
+      <div class="finder-item"><div class="icon">🎵</div>Music</div>
+      <div class="finder-item"><div class="icon">🎬</div>Movies</div>
+    </div>
+  `;
+  makeWindow('Finder', body, {id:'finder', w:600, h:400});
+}
+
+/* =========================================================
+   OTHER APPS (Launchpad, Trash, Settings, Terminal, Safari, Music)
+   ========================================================= */
+function appSettings() {
+  const body = `<div class="app-pad"><h3>Account</h3><input class="app-input" id="s-user" placeholder="Username" value="${state.user || ''}"><button class="app-btn" id="s-save">Save</button></div>`;
   const win = makeWindow('System Settings', body, {id:'settings', w:400, h:300});
   win.querySelector('#s-save').onclick = () => {
     const u = win.querySelector('#s-user').value.trim();
-    if(u) {
-      state.user = u; localStorage.setItem('obl_user', JSON.stringify(u));
-      const users = JSON.parse(localStorage.getItem('obl_users') || '[]');
-      if(!users.includes(u)) { users.push(u); localStorage.setItem('obl_users', JSON.stringify(users)); }
-      alert('Username saved! You can now use Messages.');
-    }
+    if(u) { state.user = u; localStorage.setItem('obl_user', JSON.stringify(u)); const users = JSON.parse(localStorage.getItem('obl_users') || '[]'); if(!users.includes(u)) { users.push(u); localStorage.setItem('obl_users', JSON.stringify(users)); } alert('Username saved!'); }
   };
 }
 
-// APP: TERMINAL
 function appTerminal() {
-  const body = `
-    <div class="term-body">
-      <div id="t-out" class="term-out"></div>
-      <div class="term-input-line"><span style="color:#34c759;">user@oblivian ~ %</span><input id="t-in" autocomplete="off" autofocus></div>
-    </div>
-  `;
+  const body = `<div class="term-body"><div id="t-out" class="term-out"></div><div class="term-input-line"><span style="color:#34c759;">user@oblivian ~ %</span><input id="t-in" autocomplete="off" autofocus></div></div>`;
   const win = makeWindow('Terminal', body, {id:'terminal', w:600, h:400});
   const out = win.querySelector('#t-out'), inp = win.querySelector('#t-in');
   const print = s => { out.textContent += s + '\n'; out.scrollTop = out.scrollHeight; };
@@ -855,140 +901,92 @@ function appTerminal() {
       if(cmd === 'help') print('Commands: help, neofetch, clear, date');
       else if(cmd === 'clear') out.textContent = '';
       else if(cmd === 'date') print(new Date().toString());
-      else if(cmd === 'neofetch') print('OS: OblivianOS (macOS Theme)\nUser: ' + (state.user || 'guest') + '\nHost: Web Browser');
+      else if(cmd === 'neofetch') print('OS: OblivianOS\nUser: ' + (state.user || 'guest') + '\nHost: Web Browser');
       else if(cmd !== '') print(`zsh: command not found: ${cmd}`);
     }
   });
   setTimeout(() => inp.focus(), 100);
 }
 
-// APP: SAFARI
 function appBrowser() {
-  const body = `
-    <div style="display:flex; flex-direction:column; height:100%;">
-      <div style="padding:8px 12px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; gap:8px; align-items:center;">
-        <input id="url" class="app-input" style="margin:0; flex:1; border-radius:16px; background:#e5e5ea; border:none;" placeholder="Search or enter website name">
-        <label style="display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer; color:#333;">
-          <input type="checkbox" id="proxy-toggle" style="cursor:pointer;"> Proxy
-        </label>
-        <button class="app-btn" id="go" style="border-radius:16px;">Go</button>
-      </div>
-      <iframe id="frame" style="flex:1; border:none; width:100%; background:#fff;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
-    </div>
-  `;
+  const body = `<div style="display:flex; flex-direction:column; height:100%;"><div style="padding:8px 12px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; gap:8px; align-items:center;"><input id="url" class="app-input" style="margin:0; flex:1; border-radius:16px; background:#e5e5ea; border:none;" placeholder="Search or enter website name"><label style="display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer; color:#333;"><input type="checkbox" id="proxy-toggle" style="cursor:pointer;"> Proxy</label><button class="app-btn" id="go" style="border-radius:16px;">Go</button></div><iframe id="frame" style="flex:1; border:none; width:100%; background:#fff;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe></div>`;
   const win = makeWindow('Safari', body, {id:'browser', w:950, h:650});
   const url = win.querySelector('#url'), frame = win.querySelector('#frame'), proxyToggle = win.querySelector('#proxy-toggle');
-  
   win.querySelector('#go').onclick = () => {
-    let u = url.value.trim();
-    if(!u) return;
-    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
-    
-    // Proxy logic (uses allorigins to bypass CORS/X-Frame)
-    if (proxyToggle.checked) {
-      u = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u);
-    }
+    let u = url.value.trim(); if(!u) return; if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    if (proxyToggle.checked) u = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u);
     frame.src = u;
   };
-  
   url.addEventListener('keydown', e => { if(e.key === 'Enter') win.querySelector('#go').click(); });
 }
 
-// APP: MUSIC
 function appMusic() {
-  const body = `
-    <div class="music-player">
-      <div class="music-art">🎵</div>
-      <h2 style="margin:0; font-size:18px;">Not Playing</h2>
-      <p style="color:#666; margin:5px 0 20px;">Oblivian Audio</p>
-      <audio id="audio-el" controls style="width:100%; max-width:300px; margin:0 auto; display:block;"></audio>
-      <div style="margin-top:20px; text-align:left; max-width:300px; margin-left:auto; margin-right:auto;">
-        <input class="app-input" id="m-url" placeholder="Paste MP3/OGG URL here...">
-        <button class="app-btn" id="m-play" style="width:100%;">Play Stream</button>
-      </div>
-    </div>
-  `;
+  const body = `<div class="music-player"><div class="music-art">🎵</div><h2 style="margin:0; font-size:18px;">Not Playing</h2><p style="color:#666; margin:5px 0 20px;">Oblivian Audio</p><audio id="audio-el" controls style="width:100%; max-width:300px; margin:0 auto; display:block;"></audio><div style="margin-top:20px; text-align:left; max-width:300px; margin-left:auto; margin-right:auto;"><input class="app-input" id="m-url" placeholder="Paste MP3/OGG URL here..."><button class="app-btn" id="m-play" style="width:100%;">Play Stream</button></div></div>`;
   const win = makeWindow('Music', body, {id:'music', w:400, h:500});
   const audio = win.querySelector('#audio-el');
   win.querySelector('#m-play').onclick = () => {
     const u = win.querySelector('#m-url').value.trim();
-    if(u) {
-      audio.src = u; audio.play().catch(e => alert("Cannot play audio. Ensure it is a direct MP3/OGG link."));
-      win.querySelector('.music-art').textContent = '🎶'; win.querySelector('h2').textContent = 'Playing Stream...';
-    }
+    if(u) { audio.src = u; audio.play().catch(e => alert("Cannot play audio.")); win.querySelector('.music-art').textContent = '🎶'; win.querySelector('h2').textContent = 'Playing Stream...'; }
   };
+}
+
+function appStatic(title, text) {
+  return makeWindow(title, `<div class="app-pad"><h3>${title}</h3><p>${text}</p></div>`, { w:400, h:250 });
 }
 
 /* =========================================================
    DOCK & INITIALIZATION
    ========================================================= */
 const DOCK_APPS = [
-  { id: 'finder', icon: '😀', name: 'Finder' },
-  { id: 'launchpad', icon: '🚀', name: 'Launchpad' },
+  { id: 'finder', icon: '😀', name: 'Finder', fn: appFinder },
+  { id: 'launchpad', icon: '🚀', name: 'Launchpad', fn: () => appStatic('Launchpad', 'App grid here.') },
   { id: 'safari', icon: '🧭', name: 'Safari', fn: appBrowser },
   { id: 'messages', icon: '💬', name: 'Messages', fn: appChat },
-  { id: 'mail', icon: '✉️', name: 'Mail' },
-  { id: 'maps', icon: '🗺️', name: 'Maps' },
-  { id: 'photos', icon: '🌸', name: 'Photos' },
+  { id: 'mail', icon: '✉️', name: 'Mail', fn: appMail },
+  { id: 'maps', icon: '🗺️', name: 'Maps', fn: appMaps },
+  { id: 'photos', icon: '🌸', name: 'Photos', fn: appPhotos },
   { id: 'facetime', icon: '📹', name: 'FaceTime', fn: appFaceTime },
-  { id: 'calendar', icon: '📅', name: 'Calendar' },
-  { id: 'contacts', icon: '👤', name: 'Contacts' },
-  { id: 'reminders', icon: '📝', name: 'Reminders' },
-  { id: 'notes', icon: '📒', name: 'Notes' },
-  { id: 'tv', icon: '📺', name: 'TV' },
+  { id: 'calendar', icon: '📅', name: 'Calendar', fn: appCalendar },
+  { id: 'contacts', icon: '👤', name: 'Contacts', fn: () => appStatic('Contacts', 'Your contacts list.') },
+  { id: 'reminders', icon: '📝', name: 'Reminders', fn: appReminders },
+  { id: 'notes', icon: '📒', name: 'Notes', fn: appNotes },
+  { id: 'appletv', icon: '🍎', name: 'Apple TV', fn: appAppleTV },
   { id: 'music', icon: '🎵', name: 'Music', fn: appMusic },
-  { id: 'podcasts', icon: '🎙️', name: 'Podcasts' },
-  { id: 'appstore', icon: '🅰️', name: 'App Store' },
+  { id: 'podcasts', icon: '🎙️', name: 'Podcasts', fn: () => appStatic('Podcasts', 'Listen to podcasts.') },
+  { id: 'appstore', icon: '🅰️', name: 'App Store', fn: () => appStatic('App Store', 'Download new apps.') },
   { id: 'games', icon: '🎮', name: 'Games', fn: appGames },
   { id: 'doblox', icon: '🟥', name: 'Doblox', fn: appDoblox },
   { id: 'settings', icon: '⚙️', name: 'Settings', fn: appSettings },
   { id: 'terminal', icon: '>_', name: 'Terminal', fn: appTerminal },
   { id: 'divider', divider: true },
-  { id: 'trash', icon: '🗑️', name: 'Trash' }
+  { id: 'trash', icon: '🗑️', name: 'Trash', fn: () => appStatic('Trash', 'Trash is empty.') }
 ];
 
 function buildDock() {
   const dock = $('#dock');
   dock.innerHTML = '';
-  
   DOCK_APPS.forEach(app => {
-    if(app.divider) {
-      const div = document.createElement('div');
-      div.className = 'dock-divider';
-      dock.appendChild(div);
-      return;
-    }
-    
+    if(app.divider) { const div = document.createElement('div'); div.className = 'dock-divider'; dock.appendChild(div); return; }
     const d = document.createElement('div');
-    d.className = 'dock-item';
-    d.dataset.app = app.id;
+    d.className = 'dock-item'; d.dataset.app = app.id;
     d.innerHTML = `<span class="tooltip">${app.name}</span>${app.icon}<div class="dot-indicator"></div>`;
-    
     d.onclick = () => {
-      if(app.fn) {
-        const existing = openWins[app.id];
-        if(existing && document.body.contains(existing)) {
-          if(existing.style.display === 'none') { existing.style.display = 'flex'; existing.style.zIndex = ++zTop; }
-          else { existing.style.display = 'none'; }
-          updateDockState();
-        } else {
-          const win = app.fn();
-          if(win) openWins[app.id] = win;
-        }
+      const existing = openWins[app.id];
+      if(existing && document.body.contains(existing)) {
+        if(existing.style.display === 'none') { existing.style.display = 'flex'; existing.style.zIndex = ++zTop; }
+        else { existing.style.display = 'none'; }
+        updateDockState();
       } else {
-        alert(app.name + " is coming soon!");
+        const win = app.fn();
+        if(win) openWins[app.id] = win;
       }
     };
     dock.appendChild(d);
   });
 }
 
-// Boot
 buildDock();
-setTimeout(() => {
-  $('#boot').classList.add('fade');
-  setTimeout(() => $('#boot').remove(), 600);
-}, 2000);
+setTimeout(() => { $('#boot').classList.add('fade'); setTimeout(() => $('#boot').remove(), 600); }, 2000);
 </script>
 </body>
 </html>
