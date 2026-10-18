@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OblivianOS</title>
+<style>
+:root{ --accent:#7c5cff; --accent-soft:rgba(124,92,255,.22); }
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:#07070b;color:#e8e8f0;
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:2; opacity:.045; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+button{font-family:inherit}
+
+/* boot */
+#boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;
+  background:radial-gradient(1200px 800px at 50% 0%,#1a1230,#07070b 70%);transition:opacity .5s}
+#boot.hide{opacity:0;pointer-events:none}
+#boot .brand{font-size:11px;letter-spacing:.5em;text-transform:uppercase;color:#8a86a8;animation:fadeUp .8s ease both}
+#boot h1{margin:0;font-size:38px;letter-spacing:.14em;font-weight:800;
+  background:linear-gradient(90deg,#a78bfa,#67e8f9,#a78bfa);background-size:200% auto;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:sh 6s linear infinite, fadeUp .8s .1s ease both}
+@keyframes sh{to{background-position:200% center}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.choices{display:flex;gap:26px;flex-wrap:wrap;justify-content:center;animation:fadeUp .8s .25s ease both}
+.choice{width:230px;padding:32px 22px;border-radius:22px;text-align:center;cursor:pointer;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);transition:.25s}
+.choice:hover{transform:translateY(-6px);border-color:var(--accent);background:var(--accent-soft);box-shadow:0 20px 60px -20px var(--accent)}
+.choice .glyph{font-size:46px;line-height:1;filter:drop-shadow(0 6px 20px var(--accent-soft))}
+.choice .name{margin-top:14px;font-weight:700;letter-spacing:.1em;font-size:15px}
+.choice .sub{margin-top:6px;font-size:11px;color:#8a86a8}
+
+/* shell */
+#wall{position:fixed;inset:0;background-size:cover;background-position:center;transition:background .5s ease;z-index:0}
+#topbar{position:fixed;top:0;left:0;right:0;height:34px;z-index:4000;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;font-size:12px;color:#cfcbe8;background:rgba(10,10,16,.45);backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,.07)}
+#topbar .left{display:flex;gap:14px;align-items:center}
+#topbar b{letter-spacing:.18em;font-size:11px;color:var(--accent)}
+#topbar .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);display:inline-block;margin-right:6px;vertical-align:middle}
+
+/* dock */
+#dock{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:4000;display:flex;gap:6px;padding:10px 14px;border-radius:22px;
+  background:rgba(18,18,28,.68);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 20px 60px -10px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06)}
+.dock-item{width:52px;height:52px;border-radius:15px;display:grid;place-items:center;font-size:22px;cursor:pointer;user-select:none;
+  position:relative;transition:transform .18s cubic-bezier(.2,.9,.3,1.4), background .18s, border-color .18s;
+  background:rgba(255,255,255,.05);border:1px solid transparent}
+.dock-item:hover{transform:translateY(-8px) scale(1.08);background:var(--accent-soft);border-color:var(--accent)}
+.dock-item::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0;transition:.2s;box-shadow:0 0 8px var(--accent)}
+.dock-item.active::after{opacity:1}
+
+/* windows */
+#desk-windows{position:fixed;inset:0;z-index:1000;pointer-events:none}
+.win{position:absolute;pointer-events:auto;display:flex;flex-direction:column;min-width:340px;min-height:220px;
+  background:rgba(16,16,24,.9);backdrop-filter:blur(28px) saturate(140%);
+  border:1px solid rgba(255,255,255,.12);border-radius:18px;overflow:hidden;
+  box-shadow:0 30px 80px -10px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.06);
+  animation:pop .22s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(6px)}to{opacity:1;transform:none}}
+.win-header{height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+  border-bottom:1px solid rgba(255,255,255,.08);cursor:grab;user-select:none}
+.win-header:active{cursor:grabbing}
+.win-title{font-size:13px;font-weight:600;color:#d6d2ee;letter-spacing:.02em}
+.win-btns{display:flex;gap:6px}
+.wb{width:26px;height:26px;border-radius:8px;border:0;background:rgba(255,255,255,.07);color:#cfcbe8;cursor:pointer;
+  font-size:15px;line-height:1;display:grid;place-items:center;transition:.15s}
+.wb:hover{background:rgba(255,255,255,.18)}
+.wb.close:hover{background:#e5484d;color:#fff}
+.win-body{flex:1;overflow:auto;position:relative}
+
+/* ui kit */
+.pad{padding:18px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select,textarea{font-family:inherit;font-size:13px;color:#e8e8f0;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:9px 12px;outline:none;transition:.15s}
+input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.btn{cursor:pointer;border:1px solid var(--accent);background:var(--accent-soft);color:#e8e8f0;
+  border-radius:10px;padding:9px 14px;font-size:13px;font-weight:600;transition:.15s}
+.btn:hover{filter:brightness(1.25);transform:translateY(-1px)}
+.btn.ghost{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+.muted{color:#8a86a8;font-size:12px;line-height:1.6}
+h3{margin:0 0 10px;font-size:14px;letter-spacing:.04em;color:#d6d2ee}
+code{background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;font-size:11.5px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:12px;padding:16px}
+.tile{aspect-ratio:1/1;border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;text-align:center;padding:8px;font-size:11px;color:#d6d2ee;border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(160deg,var(--accent-soft),rgba(255,255,255,.03));transition:.18s;
+  overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.tile:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 14px 34px -10px var(--accent-soft)}
+.tile .ico{font-size:28px;filter:drop-shadow(0 4px 10px var(--accent-soft))}
+.tile .nm{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;max-width:100%}
+.loadmore{margin:10px 16px 24px;text-align:center}
+
+.chat{display:flex;height:100%}
+.chat .side{width:210px;flex:0 0 210px;border-right:1px solid rgba(255,255,255,.08);padding:12px;overflow:auto}
+.chat .main{flex:1;display:flex;flex-direction:column;min-width:0}
+.msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:76%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.4;word-wrap:break-word}
+.msg.me{align-self:flex-end;background:var(--accent-soft);border:1px solid var(--accent)}
+.msg.them{align-self:flex-start;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1)}
+.msg .who{display:block;font-size:10px;opacity:.6;margin-bottom:2px}
+.composer{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,.08)}
+.composer input{flex:1}
+.person{padding:7px 9px;border-radius:9px;cursor:pointer;font-size:12.5px;transition:.12s}
+.person:hover{background:rgba(255,255,255,.08)}
+.swatch{height:70px;border-radius:12px;cursor:pointer;border:2px solid transparent;background-size:cover;background-position:center;transition:.15s}
+.swatch:hover{transform:scale(1.04)}
+.swatch.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="brand">Oblivian Systems</div>
+  <h1>OBLIVIAN OS</h1>
+  <div class="muted" style="margin-top:-14px;letter-spacing:.2em">CHOOSE YOUR ENVIRONMENT</div>
+  <div class="choices">
+    <div class="choice" data-os="linux"><div class="glyph">🐧</div><div class="name">LINUX</div><div class="sub">terminal · green · minimal</div></div>
+    <div class="choice" data-os="os"><div class="glyph">◈</div><div class="name">OBLIVIAN OS</div><div class="sub">glass · purple · cinematic</div></div>
+  </div>
+</div>
+
+<div id="wall"></div>
+
+<div id="topbar">
+  <div class="left"><b id="tb-brand"><span class="dot"></span>OBLIVIAN</b><span class="muted" id="tb-user">not signed in</span></div>
+  <span id="tb-clock" class="muted">--:--</span>
+</div>
+
+<div id="desk-windows"></div>
+<div id="dock"></div>
+
+<script>
+/* ========== storage & state ========== */
+const LS = {
+  get(k,d){ try{ const v = localStorage.getItem(k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const state = {
+  os:     LS.get('obl_os', null),
+  user:   LS.get('obl_user', null),
+  accent: LS.get('obl_accent', '#7c5cff'),
+  wall:   LS.get('obl_wall', null)
+};
+const $ = s => document.querySelector(s);
+
+/* ========== fallback data ========== */
+const FALLBACK_WALLS = [
+  { id:'midnight', name:'Midnight', css:'radial-gradient(1200px 800px at 20% 10%, #2b1a55, #07070b 70%)' },
+  { id:'aurora',   name:'Aurora',   css:'linear-gradient(135deg,#0f2027,#203a43,#2c5364)' },
+  { id:'void',     name:'Void',     css:'#07070b' }
+];
+const FALLBACK_GAMES = [{ name:'Snake', ico:'🐍', type:'inline', fn:'snake' }];
+
+let WALLS = FALLBACK_WALLS;
+
+async function loadData(file, fallback){
+  try{
+    const r = await fetch('data/' + file, { cache:'no-store' });
+    if (!r.ok) throw new Error('http ' + r.status);
+    const j = await r.json();
+    return Array.isArray(j) ? j : fallback;
+  }catch(e){ return fallback; }
+}
+
+/* ========== archive.org — multi-collection ========== */
+const ARCHIVE_COLLECTIONS = [
+  'softwarelibrary_msdos_games',
+  'softwarelibrary_apple_II',
+  'softwarelibrary_atari_2600',
+  'softwarelibrary_arcade',
+  'softwarelibrary_commodore_64',
+  'softwarelibrary_zx_spectrum',
+  'softwarelibrary_atari_7800',
+  'softwarelibrary_colecovision',
+  'softwarelibrary_amiga_cart',
+  'internetarcade'
+];
+
+async function loadArchiveGames(){
+  const cached = LS.get('obl_archive_games', null);
+  const WEEK = 7*24*60*60*1000;
+  if (cached && Date.now() - cached.t < WEEK && cached.games && cached.games.length > 500) return cached.games;
+
+  const results = await Promise.all(ARCHIVE_COLLECTIONS.map(async col => {
+    try{
+      const url = 'https://archive.org/advancedsearch.php' +
+        '?q=collection%3A' + encodeURIComponent(col) +
+        '&fl%5B%5D=identifier&fl%5B%5D=title' +
+        '&rows=800&page=1&output=json';
+      const r = await fetch(url);
+      if (!r.ok) return [];
+      const j = await r.json();
+      return (j.response && j.response.docs || []).map(d => ({
+        name: (d.title || d.identifier || 'Untitled').toString().replace(/\s+/g,' ').trim(),
+        ico: '💾', type: 'embed',
+        url: 'https://archive.org/embed/' + encodeURIComponent(d.identifier)
+      }));
+    }catch(e){ return []; }
+  }));
+
+  const seen = new Set(), games = [];
+  for (const list of results) for (const g of list){
+    if (g.url && !seen.has(g.url)){ seen.add(g.url); games.push(g); }
+  }
+  if (games.length) LS.set('obl_archive_games', { t: Date.now(), games });
+  return games;
+}
+
+/* ========== HTMLGames.com feed with local fallback ========== */
+async function loadHtmlGames(){
+  const cached = LS.get('obl_htmlgames_games', null);
+  const DAY = 24*60*60*1000;
+  if (cached && Date.now() - cached.t < DAY && cached.games && cached.games.length > 100) return cached.games;
+
+  try{
+    const r = await fetch('https://www.htmlgames.com/rss/games.php?json', { cache:'no-store' });
+    if (r.ok){
+      const raw = await r.json();
+      const games = raw.filter(g => g && g.url).map(g => ({
+        name: (g.name || 'Untitled').toString().trim(),
+        ico: '🕹️', type: 'embed', url: g.url
+      }));
+      if (games.length){
+        LS.set('obl_htmlgames_games', { t: Date.now(), games });
+        return games;
+      }
+    }
+  }catch(e){ console.warn('htmlgames live failed', e); }
+
+  try{
+    const local = await loadData('htmlgames.json', []);
+    if (local.length){
+      LS.set('obl_htmlgames_games', { t: Date.now(), games: local });
+      return local;
+    }
+  }catch(e){ /* ignore */ }
+  return [];
+}
+
+/* ========== theme & wallpaper ========== */
+function hexA(hex,a){
+  const h = String(hex).replace('#','');
+  if (h.length !== 6) return 'rgba(124,92,255,' + a + ')';
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+function applyTheme(){
+  const accent = state.accent || (state.os === 'linux' ? '#4ade80' : '#7c5cff');
+  document.documentElement.style.setProperty('--accent', accent);
+  document.documentElement.style.setProperty('--accent-soft', hexA(accent,.22));
+  $('#tb-brand').innerHTML = '<span class="dot"></span>' + (state.os === 'linux' ? 'LINUX' : 'OBLIVIAN');
+  refreshUser();
+}
+function refreshUser(){ $('#tb-user').textContent = state.user ? '· ' + state.user : 'not signed in'; }
+
+function applyWall(){
+  const w = $('#wall'), v = state.wall;
+  if (v && /^(https?:|data:|url:)/.test(v)){
+    const u = v.replace(/^url:/,'');
+    w.style.background = 'url("' + u.replace(/"/g,'%22') + '") center/cover no-repeat';
+    return;
+  }
+  const preset = WALLS.find(x => x.id === v) || WALLS[0] || { css:'#07070b' };
+  w.style.background = preset.css;
+}
+
+/* ========== window manager ========== */
+let zTop = 1000;
+const openWins = {};
+
+function updateDockState(){
+  document.querySelectorAll('.dock-item').forEach(el => {
+    const id = el.dataset.app, win = openWins[id];
+    const visible = win && document.body.contains(win) && win.style.display !== 'none';
+    el.classList.toggle('active', !!visible);
+  });
+}
+
+function makeWindow(title, html, opts = {}){
+  const win = document.createElement('div');
+  win.className = 'win';
+  win.style.width  = (opts.w || 760) + 'px';
+  win.style.height = (opts.h || 520) + 'px';
+  const n = document.querySelectorAll('#desk-windows .win').length;
+  win.style.left = Math.max(10, Math.min(80 + n*26, window.innerWidth  - 360)) + 'px';
+  win.style.top  = Math.max(42, Math.min(60 + n*26, window.innerHeight - 240)) + 'px';
+  win.style.zIndex = ++zTop;
+
+  win.innerHTML =
+    '<div class="win-header"><span class="win-title"></span>' +
+      '<div class="win-btns">' +
+        '<button class="wb min" title="Minimize">–</button>' +
+        '<button class="wb close" title="Close">×</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="win-body"></div>';
+
+  win.querySelector('.win-title').textContent = title;
+  win.querySelector('.win-body').innerHTML = html;
+  document.getElementById('desk-windows').appendChild(win);
+
+  const head = win.querySelector('.win-header');
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  head.addEventListener('pointerdown', e => {
+    if (e.target.closest('.wb')) return;
+    dragging = true; sx = e.clientX; sy = e.clientY;
+    ox = parseFloat(win.style.left); oy = parseFloat(win.style.top);
+    head.setPointerCapture(e.pointerId);
+  });
+  head.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    win.style.left = Math.max(-40, Math.min(window.innerWidth  - 100, ox + e.clientX - sx)) + 'px';
+    win.style.top  = Math.max(34,  Math.min(window.innerHeight - 60,  oy + e.clientY - sy)) + 'px';
+  });
+  head.addEventListener('pointerup', () => { dragging = false; });
+
+  win.addEventListener('pointerdown', () => { win.style.zIndex = ++zTop; });
+  win.querySelector('.close').onclick = () => {
+    win.remove();
+    for (const k in openWins) if (openWins[k] === win) delete openWins[k];
+    updateDockState();
+  };
+  win.querySelector('.min').onclick = () => {
+    win.style.display = 'none';
+    updateDockState();
+  };
+  updateDockState();
+  return win;
+}
+
+/* ========== snake ========== */
+function mountSnake(root){
+  root.innerHTML =
+    '<canvas tabindex="0" width="380" height="380" style="display:block;margin:0 auto;background:#0b0b12;outline:none;border-radius:12px;box-shadow:0 10px 30px -10px #000"></canvas>' +
+    '<div style="text-align:center;padding:12px;font-size:12px;color:#8a86a8">Arrows / WASD · R to restart</div>';
+  const c = root.querySelector('canvas'), ctx = c.getContext('2d');
+  const S = 19, N = 20;
+  let snake = [{x:10,y:10}], dir = {x:1,y:0}, food = {x:15,y:15}, score = 0, dead = false;
+  function place(){ food = { x: Math.floor(Math.random()*N), y: Math.floor(Math.random()*N) }; }
+  function step(){
+    if (dead) return;
+    const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    if (h.x<0 || h.y<0 || h.x>=N || h.y>=N || snake.some(s => s.x===h.x && s.y===h.y)){ dead = true; draw(); return; }
+    snake.unshift(h);
+    if (h.x===food.x && h.y===food.y){ score++; place(); } else snake.pop();
+    draw();
+  }
+  function draw(){
+    ctx.fillStyle = '#0b0b12'; ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#ff4d6d'; ctx.fillRect(food.x*S+1, food.y*S+1, S-2, S-2);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#7c5cff';
+    snake.forEach((s,i) => { ctx.globalAlpha = i===0 ? 1 : .78; ctx.fillRect(s.x*S+1, s.y*S+1, S-2, S-2); });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#cfcbe8'; ctx.font = '14px system-ui'; ctx.fillText('Score: ' + score, 8, 20);
+    if (dead){
+      ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.fillStyle = '#fff'; ctx.font = '18px system-ui'; ctx.textAlign = 'center';
+      ctx.fillText('Game Over — press R', c.width/2, c.height/2);
+      ctx.textAlign = 'left';
+    }
+  }
+  c.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (k === 'r'){ snake=[{x:10,y:10}]; dir={x:1,y:0}; score=0; dead=false; place(); draw(); return; }
+    if (dead) return;
+    if ((k==='arrowup'||k==='w')    && dir.y===0) dir={x:0,y:-1};
+    if ((k==='arrowdown'||k==='s')  && dir.y===0) dir={x:0,y:1};
+    if ((k==='arrowleft'||k==='a')  && dir.x===0) dir={x:-1,y:0};
+    if ((k==='arrowright'||k==='d') && dir.x===0) dir={x:1,y:0};
+    e.preventDefault();
+  });
+  place(); draw(); c.focus();
+  const iv = setInterval(step, 110);
+  const obs = new MutationObserver(() => { if (!document.body.contains(c)){ clearInterval(iv); obs.disconnect(); } });
+  obs.observe(document.body, { childList:true, subtree:true });
+}
+
+/* ========== launch a game ========== */
+function launchGame(g){
+  if (g.type === 'inline' && g.fn === 'snake'){
+    const win = makeWindow('🐍 Snake', '<div id="snake-root" style="padding:18px"></div>', { w:440, h:520 });
+    mountSnake(win.querySelector('#snake-root'));
+    return;
+  }
+  if (g.type !== 'embed' || !g.url){
+    makeWindow(g.name || 'Game', '<div class="pad"><p class="muted">No launch URL.</p></div>', { w:420, h:200 });
+    return;
+  }
+  const html =
+    '<div style="display:flex;flex-direction:column;height:100%">' +
+      '<div class="row" style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08)">' +
+        '<span class="muted g-url" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>' +
+        '<button class="btn ghost open-ext">Open externally</button>' +
+      '</div>' +
+      '<iframe style="flex:1;border:0;width:100%;background:#000" ' +
+        'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock"></iframe>' +
+      '<div class="muted" style="padding:6px 12px;border-top:1px solid rgba(255,255,255,.08);font-size:11px">' +
+        'Blank frame? The host blocks embedding — use “Open externally”.</div>' +
+    '</div>';
+  const win = makeWindow((g.ico || '🎮') + ' ' + (g.name || 'Game'), html, { w:900, h:660 });
+  win.querySelector('.g-url').textContent = g.url;
+  win.querySelector('iframe').src = g.url;
+  win.querySelector('.open-ext').onclick = () => window.open(g.url, '_blank', 'noopener');
+}
+
+/* ========== games app ========== */
+function appGames(){
+  const body =
+    '<div class="pad" style="padding-bottom:0">' +
+      '<div class="row">' +
+        '<input id="g-search" placeholder="Search 6000+ games…" style="flex:1;min-width:200px">' +
+        '<span class="muted" id="g-count">loading…</span>' +
+        '<button class="btn ghost" id="g-add">+ Custom URL</button>' +
+      '</div>' +
+      '<p class="muted" style="margin-top:10px">Featured + archive.org retro + HTMLGames.com catalog. ' +
+      'If a game shows a blank frame, hit “Open externally”.</p>' +
+    '</div>' +
+    '<div class="grid" id="g-grid"></div>' +
+    '<div class="loadmore" id="g-more"></div>';
+
+  const win = makeWindow('Games', body, { w:920, h:660 });
+  const grid = win.querySelector('#g-grid');
+  const countEl = win.querySelector('#g-count');
+  const moreEl = win.querySelector('#g-more');
+  const searchEl = win.querySelector('#g-search');
+
+  let all = [], shown = 120, query = '';
+
+  function render(){
+    const q = query.toLowerCase();
+    const matches = q ? all.filter(g => (g.name||'').toLowerCase().includes(q)) : all;
+    const slice = q ? matches.slice(0, 500) : matches.slice(0, shown);
+    grid.innerHTML = '';
+    slice.forEach(g => {
+      const d = document.createElement('div');
+      d.className = 'tile';
+      const ico = document.createElement('div'); ico.className = 'ico'; ico.textContent = g.ico || '🎮';
+      const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = g.name || 'Untitled';
+      d.appendChild(ico); d.appendChild(nm);
+      d.onclick = () => launchGame(g);
+      grid.appendChild(d);
+    });
+    if (!matches.length) grid.innerHTML = '<div class="muted" style="padding:8px">No matches.</div>';
+    moreEl.innerHTML = '';
+    if (!q && matches.length > shown){
+      const btn = document.createElement('button');
+      btn.className = 'btn ghost';
+      btn.textContent = 'Load more (' + (matches.length - shown) + ' remaining)';
+      btn.onclick = () => { shown += 200; render(); };
+      moreEl.appendChild(btn);
+    }
+    countEl.textContent = matches.length + ' games';
+  }
+  searchEl.oninput = e => { query = e.target.value; render(); };
+  win.querySelector('#g-add').onclick = () => {
+    const u = prompt('Game URL (must allow embedding):');
+    if (u) launchGame({ name:'Custom', ico:'🔗', type:'embed', url:u });
+  };
+
+  async function init(){
+    const local = await loadData('games.json', FALLBACK_GAMES);
+    all = [...local]; render();
+
+    let archiveSafe = [];
+    try{ archiveSafe = await loadArchiveGames(); }catch(e){ console.warn('archive failed', e); }
+    all = [...local, ...archiveSafe]; render();
+
+    let htmlSafe = [];
+    try{ htmlSafe = await loadHtmlGames(); }catch(e){ console.warn('htmlgames failed', e); }
+    all = [...local, ...archiveSafe, ...htmlSafe];
+    render();
+  }
+  init();
+}
+
+/* ========== settings ========== */
+function appSettings(){
+  const body =
+    '<div class="pad">' +
+      '<h3>Wallpaper</h3>' +
+      '<div id="wall-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px"></div>' +
+      '<div class="row" style="margin-top:14px">' +
+        '<input id="gif-url" placeholder="Paste a GIF / image URL…" style="flex:1;min-width:200px">' +
+        '<button class="btn" id="set-gif">Set wallpaper</button>' +
+      '</div>' +
+      '<p class="muted">Presets from <code>data/wallpapers.json</code>. GIF URLs applied as background image.</p>' +
+      '<h3 style="margin-top:22px">Accent</h3>' +
+      '<div class="row"><input type="color" id="accent" style="width:56px;height:38px;padding:2px"><span class="muted">Highlights &amp; buttons</span></div>' +
+      '<h3 style="margin-top:22px">Account</h3>' +
+      '<div class="row">' +
+        '<input id="username" placeholder="Your username" maxlength="24">' +
+        '<button class="btn" id="save-user">Save</button>' +
+      '</div>' +
+      '<p class="muted">This is the name friends search for in Messages.</p>' +
+    '</div>';
+
+  const win = makeWindow('Settings', body, { w:640, h:600 });
+  const grid = win.querySelector('#wall-grid');
+  WALLS.forEach(w => {
+    const d = document.createElement('div');
+    d.className = 'swatch' + (state.wall === w.id ? ' active' : '');
+    d.style.background = w.css;
+    d.title = w.name || w.id;
+    d.onclick = () => {
+      state.wall = w.id; LS.set('obl_wall', state.wall); applyWall();
+      grid.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+      d.classList.add('active');
+    };
+    grid.appendChild(d);
+  });
+  win.querySelector('#accent').value = state.accent;
+  win.querySelector('#accent').oninput = e => {
+    state.accent = e.target.value; LS.set('obl_accent', state.accent); applyTheme();
+  };
+  const gifInput = win.querySelector('#gif-url');
+  gifInput.value = /^(https?:|url:|data:)/.test(state.wall || '') ? state.wall : '';
+  win.querySelector('#set-gif').onclick = () => {
+    const u = gifInput.value.trim(); if (!u) return;
+    state.wall = u; LS.set('obl_wall', state.wall); applyWall();
+  };
+  const un = win.querySelector('#username');
+  un.value = state.user || '';
+  win.querySelector('#save-user').onclick = () => {
+    const v = un.value.trim().slice(0,24); if (!v) return;
+    state.user = v; LS.set('obl_user', v); registerUser(v); refreshUser();
+  };
+}
+
+/* ========== messages ========== */
+const USERS_KEY = 'obl_users';
+function registerUser(u){
+  const list = LS.get(USERS_KEY, []);
+  if (!list.includes(u)){ list.push(u); LS.set(USERS_KEY, list); }
+}
+const allUsers = () => LS.get(USERS_KEY, []);
+const chatKey = (a,b) => 'obl_chat_' + [a,b].sort().join('__');
+const getMsgs = (a,b) => LS.get(chatKey(a,b), []);
+function pushMsg(from,to,text){
+  const m = LS.get(chatKey(from,to), []);
+  m.push({ from, to, text, t: Date.now() });
+  LS.set(chatKey(from,to), m);
+}
+
+function appChat(){
+  if (!state.user){
+    return makeWindow('Messages',
+      '<div class="pad"><h3>Pick a username first</h3><p class="muted">Open Settings → Account, set a username, then come back.</p></div>',
+      { w:420, h:220 });
+  }
+  registerUser(state.user);
+
+  const body =
+    '<div class="chat">' +
+      '<div class="side">' +
+        '<div style="font-weight:700;font-size:13px;margin-bottom:10px" id="chat-me"></div>' +
+        '<input id="chat-search" placeholder="Search username" style="width:100%;margin-bottom:10px">' +
+        '<div id="chat-results"></div>' +
+        '<div style="margin-top:16px;font-size:11px;color:#8a86a8;margin-bottom:6px">ON THIS BROWSER</div>' +
+        '<div id="chat-people"></div>' +
+      '</div>' +
+      '<div class="main">' +
+        '<div class="msgs" id="chat-msgs"><div class="muted" style="margin:auto">Search a username to start</div></div>' +
+        '<div class="composer">' +
+          '<input id="chat-input" placeholder="Message…" disabled>' +
+          '<button class="btn" id="chat-send" disabled>Send</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  const win = makeWindow('Messages', body, { w:820, h:560 });
+  const me = state.user;
+  win.querySelector('#chat-me').textContent = '@' + me;
+
+  let partner = null;
+  const peopleEl = win.querySelector('#chat-people');
+  const resultsEl = win.querySelector('#chat-results');
+  const msgsEl = win.querySelector('#chat-msgs');
+  const input = win.querySelector('#chat-input');
+  const sendBtn = win.querySelector('#chat-send');
+
+  function renderPeople(){
+    peopleEl.innerHTML = '';
+    const others = allUsers().filter(u => u !== me);
+    if (!others.length){ peopleEl.innerHTML = '<div class="muted">Nobody else yet.</div>'; return; }
+    others.forEach(u => {
+      const d = document.createElement('div'); d.className = 'person'; d.textContent = '@' + u;
+      d.onclick = () => openConvo(u); peopleEl.appendChild(d);
+    });
+  }
+  function renderMsgs(){
+    if (!partner) return;
+    const list = getMsgs(me, partner);
+    msgsEl.innerHTML = '';
+    if (!list.length){ msgsEl.innerHTML = '<div class="muted" style="margin:auto">No messages with @' + partner + ' yet.</div>'; return; }
+    list.forEach(m => {
+      const d = document.createElement('div');
+      d.className = 'msg ' + (m.from === me ? 'me' : 'them');
+      const who = document.createElement('span'); who.className = 'who'; who.textContent = '@' + m.from;
+      const txt = document.createElement('span'); txt.textContent = m.text;
+      d.appendChild(who); d.appendChild(txt); msgsEl.appendChild(d);
+    });
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+  function openConvo(name){ partner = name; input.disabled = false; sendBtn.disabled = false; input.focus(); renderMsgs(); }
+
+  win.querySelector('#chat-search').oninput = e => {
+    const q = e.target.value.trim().toLowerCase();
+    resultsEl.innerHTML = ''; if (!q) return;
+    const hits = allUsers().filter(u => u !== me && u.toLowerCase().includes(q));
+    if (!hits.length){ resultsEl.innerHTML = '<div class="muted">No match.</div>'; return; }
+    hits.forEach(u => {
+      const d = document.createElement('div'); d.className = 'person'; d.textContent = '@' + u;
+      d.onclick = () => openConvo(u); resultsEl.appendChild(d);
+    });
+  };
+  function send(){
+    const text = input.value.trim(); if (!text || !partner) return;
+    pushMsg(me, partner, text); input.value = ''; renderMsgs();
+  }
+  sendBtn.onclick = send;
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  function onStorage(e){
+    if (e.key && e.key.indexOf('obl_chat_') === 0) renderMsgs();
+    if (e.key === USERS_KEY) renderPeople();
+  }
+  window.addEventListener('storage', onStorage);
+  const obs = new MutationObserver(() => {
+    if (!document.body.contains(win)){ window.removeEventListener('storage', onStorage); obs.disconnect(); }
+  });
+  obs.observe(document.body, { childList:true, subtree:true });
+  renderPeople();
+}
+
+/* ========== browser ========== */
+function appBrowser(){
+  const body =
+    '<div style="display:flex;flex-direction:column;height:100%">' +
+      '<div class="row" style="padding:10px;border-bottom:1px solid rgba(255,255,255,.08)">' +
+        '<input id="urlbar" placeholder="https://example.com" style="flex:1;min-width:200px">' +
+        '<button class="btn" id="go">Go</button>' +
+        '<button class="btn ghost" id="ext">Open externally</button>' +
+      '</div>' +
+      '<iframe id="frame" style="flex:1;border:0;width:100%;background:#fff" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>' +
+      '<div class="muted" style="padding:8px 12px;border-top:1px solid rgba(255,255,255,.08)">Big sites send X-Frame-Options and refuse to load here.</div>' +
+    '</div>';
+  const win = makeWindow('Browser', body, { w:940, h:640 });
+  const bar = win.querySelector('#urlbar'), frame = win.querySelector('#frame');
+  function go(){
+    let u = bar.value.trim(); if (!u) return;
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    bar.value = u; frame.src = u;
+  }
+  win.querySelector('#go').onclick = go;
+  bar.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  win.querySelector('#ext').onclick = () => { if (bar.value) window.open(bar.value, '_blank', 'noopener'); };
+}
+
+/* ========== music ========== */
+function appMusic(){
+  const body =
+    '<div class="pad">' +
+      '<h3>Library</h3>' +
+      '<div class="row">' +
+        '<input id="m-url" placeholder="Audio URL (.mp3 / .ogg / .m4a)" style="flex:1;min-width:220px">' +
+        '<input id="m-name" placeholder="Title" style="width:150px">' +
+        '<button class="btn" id="m-add">Add</button>' +
+      '</div>' +
+      '<p class="muted">Streams direct audio links. Use files you have the right to play.</p>' +
+      '<div id="m-list" style="margin-top:14px"></div>' +
+      '<audio id="m-audio" controls style="width:100%;margin-top:16px"></audio>' +
+    '</div>';
+  const win = makeWindow('Music', body, { w:620, h:520 });
+  const listEl = win.querySelector('#m-list'), audio = win.querySelector('#m-audio');
+  let tracks = LS.get('obl_tracks', []);
+  function render(){
+    listEl.innerHTML = '';
+    if (!tracks.length){ listEl.innerHTML = '<div class="muted">No tracks yet.</div>'; return; }
+    tracks.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'person';
+      row.style.display = 'flex'; row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
+      const nm = document.createElement('span'); nm.textContent = t.name;
+      const del = document.createElement('button'); del.className = 'btn ghost'; del.textContent = '✕';
+      nm.onclick = () => { audio.src = t.url; audio.play(); };
+      del.onclick = () => { tracks.splice(i,1); LS.set('obl_tracks', tracks); render(); };
+      row.appendChild(nm); row.appendChild(del); listEl.appendChild(row);
+    });
+  }
+  render();
+  win.querySelector('#m-add').onclick = () => {
+    const url = win.querySelector('#m-url').value.trim();
+    const name = win.querySelector('#m-name').value.trim() || 'Untitled';
+    if (!url) return;
+    tracks.push({ url, name }); LS.set('obl_tracks', tracks);
+    win.querySelector('#m-url').value = ''; win.querySelector('#m-name').value = '';
+    render();
+  };
+}
+
+/* ========== doblox ========== */
+function appDoblox(){
+  const body =
+    '<div class="pad">' +
+      '<h3>Doblox</h3>' +
+      '<p class="muted">Roblox places are <code>.rbxl</code> files that need the Roblox engine. There is no browser runtime for them, and roblox.com blocks framing. Doblox is a launcher.</p>' +
+      '<div class="row" style="margin-top:14px">' +
+        '<button class="btn" id="d1">Open uncopylocked repo</button>' +
+        '<button class="btn ghost" id="d2">Open Roblox</button>' +
+      '</div>' +
+    '</div>';
+  const win = makeWindow('Doblox', body, { w:560, h:360 });
+  win.querySelector('#d1').onclick = () =>
+    window.open('https://github.com/amaanallen2016-web/Doblox-Uncopylocked-Games', '_blank', 'noopener');
+  win.querySelector('#d2').onclick = () => window.open('https://www.roblox.com', '_blank', 'noopener');
+}
+
+/* ========== terminal ========== */
+function appTerminal(){
+  const body =
+    '<div style="padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;height:100%;display:flex;flex-direction:column">' +
+      '<div id="t-out" style="flex:1;overflow:auto;white-space:pre-wrap;line-height:1.6"></div>' +
+      '<div class="row" style="margin-top:8px">' +
+        '<span style="color:var(--accent)">$</span>' +
+        '<input id="t-in" style="flex:1;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.15);border-radius:0" autocomplete="off">' +
+      '</div>' +
+    '</div>';
+  const win = makeWindow('Terminal', body, { w:680, h:420 });
+  const out = win.querySelector('#t-out'), inp = win.querySelector('#t-in');
+  const print = s => { out.textContent += s + '\n'; out.scrollTop = out.scrollHeight; };
+  print('OblivianOS shell — type "help"');
+  inp.focus();
+  inp.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const line = inp.value.trim(); inp.value = ''; print('$ ' + line);
+    const [cmd, ...args] = line.split(/\s+/);
+    switch (cmd){
+      case '': break;
+      case 'help': print('help / neofetch / wallpaper <url> / whoami / clear / date'); break;
+      case 'neofetch':
+        print('  ◈  OblivianOS\n  ------------------\n  OS:      ' + (state.os === 'linux' ? 'Linux' : 'Oblivian OS') +
+              '\n  User:    ' + (state.user || 'guest') +
+              '\n  Windows: ' + document.querySelectorAll('#desk-windows .win').length);
+        break;
+      case 'wallpaper':
+        if (args[0]){ state.wall = args[0]; LS.set('obl_wall', state.wall); applyWall(); print('wallpaper set'); }
+        else print('usage: wallpaper <url>');
+        break;
+      case 'whoami': print(state.user || 'guest'); break;
+      case 'clear': out.textContent = ''; break;
+      case 'date': print(new Date().toString()); break;
+      default: print('command not found: ' + cmd);
+    }
+  });
+  win.addEventListener('pointerdown', () => inp.focus());
+}
+
+/* ========== about ========== */
+function appAbout(){
+  const body =
+    '<div class="pad">' +
+      '<h3>OblivianOS</h3>' +
+      '<p class="muted">A browser desktop shell. Client-side only.</p>' +
+      '<h3 style="margin-top:22px">Real</h3>' +
+      '<p class="muted">Window manager · dock toggle · themes · wallpapers · username chat (same browser) · proxy browser · music player · terminal · Snake · 5,000+ games from archive.org · 1,000+ games from HTMLGames.com.</p>' +
+      '<h3 style="margin-top:22px">Not real (and why)</h3>' +
+      '<p class="muted">· PS4 emulation — impossible in a tab.<br>· Roblox in-page — needs the Roblox engine; host blocks framing.<br>· Real VPN — needs a server.<br>· Cross-device chat/calls — needs a backend.</p>' +
+    '</div>';
+  makeWindow('About', body, { w:620, h:480 });
+}
+
+/* ========== app registry + toggle dock ========== */
+const APPS = [
+  { id:'settings', icon:'⚙️', name:'Settings', fn:appSettings },
+  { id:'games',    icon:'🎮', name:'Games',    fn:appGames },
+  { id:'chat',     icon:'💬', name:'Messages', fn:appChat },
+  { id:'browser',  icon:'🌐', name:'Browser',  fn:appBrowser },
+  { id:'music',    icon:'🎵', name:'Music',    fn:appMusic },
+  { id:'doblox',   icon:'🟥', name:'Doblox',   fn:appDoblox },
+  { id:'terminal', icon:'>_', name:'Terminal', fn:appTerminal },
+  { id:'about',    icon:'ⓘ',  name:'About',    fn:appAbout }
+];
+
+function openApp(id){
+  const app = APPS.find(a => a.id === id); if (!app) return;
+  const existing = openWins[id];
+  if (existing && document.body.contains(existing)){
+    if (existing.style.display === 'none'){
+      existing.style.display = 'flex';
+      existing.style.zIndex = ++zTop;
+    } else {
+      existing.remove();
+      delete openWins[id];
+    }
+    updateDockState();
+    return;
+  }
+  const win = app.fn();
+  if (win && win.classList && win.classList.contains('win')) openWins[id] = win;
+  updateDockState();
+}
+
+function buildDock(){
+  const dock = $('#dock');
+  dock.innerHTML = '';
+  APPS.forEach(a => {
+    const d = document.createElement('div');
+    d.className = 'dock-item'; d.dataset.app = a.id;
+    d.textContent = a.icon; d.title = a.name;
+    d.onclick = () => openApp(a.id);
+    dock.appendChild(d);
+  });
+}
+
+function tick(){
+  $('#tb-clock').textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+
+/* boot */
+document.querySelectorAll('.choice').forEach(c => {
+  c.addEventListener('click', () => {
+    state.os = c.dataset.os; LS.set('obl_os', state.os);
+    if (!state.accent) state.accent = state.os === 'linux' ? '#4ade80' : '#7c5cff';
+    if (!state.wall)   state.wall   = state.os === 'linux' ? 'forest' : 'midnight';
+    LS.set('obl_accent', state.accent); LS.set('obl_wall', state.wall);
+    applyTheme(); applyWall(); buildDock();
+    $('#boot').classList.add('hide');
+    setTimeout(() => { $('#boot').style.display = 'none'; }, 500);
+  });
+});
+
+(async function init(){
+  WALLS = await loadData('wallpapers.json', FALLBACK_WALLS);
+  applyTheme(); applyWall(); buildDock(); tick();
+  setInterval(tick, 15000);
+})();
+</script>
+</body>
+</html>
