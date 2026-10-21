@@ -4,224 +4,264 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>macOS - Oblivian</title>
-<!-- Libraries -->
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
 <style>
   :root {
     --system-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --accent: #007aff;
+    --accent: #6ee7ff;
+    --accent-strong: #3b82f6;
+    --accent-2: #8b5cf6;
+    --bg-main: #050816;
+    --glass: rgba(17, 24, 39, 0.58);
+    --glass-strong: rgba(15, 23, 42, 0.78);
+    --glass-light: rgba(255,255,255,0.18);
+    --line: rgba(255,255,255,0.18);
+    --text: #e6f3ff;
+    --muted: #b4c4d9;
+    --dark: #020611;
   }
+
   * { box-sizing: border-box; user-select: none; -webkit-user-drag: none; }
-  body, html { height: 100%; margin: 0; overflow: hidden; font-family: var(--system-font); background: #000; }
-  
+  html, body { height: 100%; margin: 0; overflow: hidden; font-family: var(--system-font); background: var(--bg-main); color: var(--text); }
+
+  body {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(59,130,246,0.5), transparent 25%),
+      radial-gradient(circle at 80% 30%, rgba(139,92,246,0.3), transparent 28%),
+      linear-gradient(135deg, #050816 0%, #0b1120 35%, #0f172a 100%);
+  }
+
   #wallpaper {
     position: fixed; inset: 0; z-index: 0;
-    background: url('https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
+    background:
+      linear-gradient(180deg, rgba(15,23,42,0.12), rgba(2,6,17,0.42)),
+      url('https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat;
     transition: background 0.5s ease;
+    filter: saturate(1.10) contrast(1.05);
   }
 
-  /* MENU BAR */
   #menubar {
-    position: fixed; top: 0; left: 0; right: 0; height: 28px; z-index: 9999;
-    background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
-    color: #000; font-size: 13px; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    position: fixed; top: 0; left: 0; right: 0; height: 32px; z-index: 9999;
+    background: rgba(255,255,255,0.12); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 18px;
+    color: #f4f8ff; font-size: 12px; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
-  .menu-left, .menu-right { display: flex; gap: 20px; align-items: center; }
-  .menu-item { cursor: pointer; opacity: 0.9; transition: opacity 0.2s; }
-  .menu-item:hover { opacity: 1; }
-  .apple-logo { font-size: 16px; margin-right: 5px; cursor: default; }
+  .menu-left, .menu-right { display: flex; gap: 18px; align-items: center; }
+  .menu-item { cursor: pointer; opacity: 0.92; transition: opacity 0.2s, transform 0.2s; }
+  .menu-item:hover { opacity: 1; transform: translateY(-1px); }
+  .apple-logo { font-size: 16px; margin-right: 4px; cursor: default; }
   .menu-right svg { width: 16px; height: 16px; fill: currentColor; cursor: pointer; opacity: 0.8; }
 
-  /* WIDGETS */
+  #quick-actions {
+    position: absolute; top: 48px; left: 32px; z-index: 20; display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .quick-btn {
+    appearance: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 999px;
+    padding: 8px 14px; background: rgba(255,255,255,0.08); color: var(--text); font-weight: 600; cursor: pointer;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.25); transition: transform 0.2s ease, background 0.2s ease;
+  }
+  .quick-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.14); }
+  .quick-btn.primary {
+    background: linear-gradient(135deg, rgba(110,231,255,0.9), rgba(59,130,246,0.9));
+    color: #03131d; border-color: transparent;
+  }
+
   #widgets {
-    position: absolute; top: 50px; left: 30px; z-index: 10;
-    display: flex; flex-direction: column; gap: 15px;
-    pointer-events: none;
+    position: absolute; top: 94px; left: 30px; z-index: 10; display: flex; flex-direction: column; gap: 14px; pointer-events: none;
   }
   .widget {
-    background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-    border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); padding: 16px;
-    color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    width: 170px; pointer-events: auto;
+    background: rgba(10,17,31,0.42); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+    border-radius: 22px; border: 1px solid rgba(255,255,255,0.12); padding: 16px; color: #fff;
+    box-shadow: 0 20px 30px rgba(0,0,0,0.18); width: 176px; pointer-events: auto;
   }
-  .w-weather { background: linear-gradient(180deg, #3b82f6, #2563eb); border: none; }
+  .w-weather { background: linear-gradient(180deg, rgba(37,99,235,0.84), rgba(59,130,246,0.6)); border: none; }
   .w-weather h2 { margin: 0; font-size: 34px; font-weight: 400; }
   .w-weather p { margin: 4px 0; font-size: 14px; font-weight: 500; }
   .w-weather .desc { font-size: 12px; opacity: 0.9; line-height: 1.4; }
   .w-battery { text-align: center; }
-  .w-battery .ring { width: 60px; height: 60px; border-radius: 50%; border: 6px solid rgba(255,255,255,0.3); border-top-color: #ef4444; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600;}
+  .w-battery .ring { width: 60px; height: 60px; border-radius: 50%; border: 6px solid rgba(255,255,255,0.2); border-top-color: #f87171; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
   .w-calendar { height: 160px; }
-  .w-calendar .header { color: #ef4444; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-  .w-calendar .date { font-size: 40px; font-weight: 300; line-height: 1; margin-top: 5px; color: #000; }
-  .w-calendar .event { font-size: 11px; color: #000; margin-top: 10px; line-height: 1.3; }
+  .w-calendar .header { color: #fca5a5; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+  .w-calendar .date { font-size: 40px; font-weight: 300; line-height: 1; margin-top: 5px; color: #e5f1ff; }
+  .w-calendar .event { font-size: 11px; color: #e5f1ff; margin-top: 10px; line-height: 1.3; }
 
-  /* CLOCK & ICONS */
   #clock {
     position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 140px; font-weight: 500; color: #fff; letter-spacing: -4px;
-    text-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 5; pointer-events: none;
-    white-space: nowrap; transition: font-size 0.3s;
+    font-size: 130px; font-weight: 500; color: #fff; letter-spacing: -4px;
+    text-shadow: 0 6px 24px rgba(0,0,0,0.35); z-index: 5; pointer-events: none; white-space: nowrap; transition: font-size 0.3s;
   }
+
   #desktop-icons {
-    position: absolute; top: 50px; right: 20px; z-index: 10;
-    display: flex; flex-direction: column; gap: 20px; align-items: center;
-    pointer-events: none;
+    position: absolute; top: 50px; right: 20px; z-index: 10; display: flex; flex-direction: column; gap: 20px; align-items: center; pointer-events: none;
   }
   .d-icon { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; pointer-events: auto; }
-  .d-icon .img { width: 60px; height: 60px; background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
-  .d-icon span { color: #fff; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); text-align: center; font-weight: 500;}
-
-  /* DOCK */
-  #dock-container {
-    position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 9999;
-    max-width: 100vw;
+  .d-icon .img {
+    width: 62px; height: 62px; background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.6));
+    border-radius: 16px; box-shadow: 0 12px 25px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; font-size: 30px;
+    border: 1px solid rgba(255,255,255,0.2);
   }
+  .d-icon span { color: #fff; font-size: 12px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); text-align: center; font-weight: 600; }
+
+  #dock-container { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 9999; max-width: 100vw; }
   #dock {
-    display: flex; gap: 6px; padding: 8px 12px; border-radius: 24px;
-    background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-    border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    align-items: flex-end; overflow-x: auto; overflow-y: hidden;
-    scrollbar-width: none;
+    display: flex; gap: 7px; padding: 10px 14px; border-radius: 28px; background: rgba(17,24,39,0.42);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 20px 28px rgba(2,6,17,0.4); align-items: flex-end; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
   }
   #dock::-webkit-scrollbar { display: none; }
   .dock-item {
-    width: 52px; height: 52px; min-width: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
-    font-size: 34px; cursor: pointer; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    position: relative;
+    width: 58px; height: 58px; min-width: 58px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 34px; cursor: pointer; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+    position: relative; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
   }
-  .dock-item:hover { transform: scale(1.3) translateY(-10px); margin: 0 6px; }
+  .dock-item:hover { transform: scale(1.28) translateY(-10px); margin: 0 6px; box-shadow: 0 16px 25px rgba(59,130,246,0.2); }
   .dock-item:hover .tooltip { opacity: 1; }
   .tooltip {
-    position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.7); color: #fff; font-size: 12px; padding: 4px 10px; border-radius: 6px;
-    opacity: 0; pointer-events: none; transition: opacity 0.2s; white-space: nowrap;
+    position: absolute; top: -34px; left: 50%; transform: translateX(-50%);
+    background: rgba(2,6,17,0.78); color: #fff; font-size: 12px; padding: 4px 10px; border-radius: 8px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s; white-space: nowrap; border: 1px solid rgba(255,255,255,0.15);
   }
-  .dock-divider { width: 1px; height: 48px; background: rgba(255,255,255,0.3); margin: 0 6px; align-self: center; min-width: 1px; }
-  .dot-indicator { position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: #000; opacity: 0; transition: opacity 0.2s; }
+  .dock-divider { width: 1px; height: 52px; background: rgba(255,255,255,0.15); margin: 0 5px; align-self: center; min-width: 1px; }
+  .dot-indicator { position: absolute; bottom: 4px; width: 5px; height: 5px; border-radius: 50%; background: #e0f2fe; opacity: 0; transition: opacity 0.2s; }
   .dock-item.active .dot-indicator { opacity: 1; }
 
-  /* WINDOWS */
   #desk-windows { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
   .win {
     position: absolute; pointer-events: auto; display: flex; flex-direction: column; min-width: 350px; min-height: 250px;
-    background: #ffffff; border-radius: 12px; overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.1);
-    animation: pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    resize: both;
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(239,244,249,0.96));
+    border-radius: 16px; overflow: hidden; border: 1px solid rgba(19, 25, 39, 0.08);
+    box-shadow: 0 28px 70px rgba(2, 6, 17, 0.35), 0 0 0 1px rgba(0,0,0,0.08);
+    animation: pop 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); resize: both;
   }
   @keyframes pop { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
   .win-header {
-    height: 38px; background: #f6f6f6; border-bottom: 1px solid #e5e5e5;
+    height: 38px; background: rgba(246,248,250,0.9); border-bottom: 1px solid rgba(17,24,39,0.08);
     display: flex; align-items: center; padding: 0 12px; cursor: grab; flex-shrink: 0;
   }
   .win-header:active { cursor: grabbing; }
   .traffic-lights { display: flex; gap: 8px; }
-  .tl { width: 12px; height: 12px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.1); cursor: pointer; }
+  .tl { width: 12px; height: 12px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.08); cursor: pointer; }
   .tl.close { background: #ff5f56; }
   .tl.min { background: #ffbd2e; }
   .tl.max { background: #27c93f; }
-  .tl.close:hover, .tl.min:hover, .tl.max:hover { filter: brightness(0.8); }
-  .win-title { flex: 1; text-align: center; font-size: 13px; font-weight: 600; color: #333; margin-right: 50px; }
-  .win-body { flex: 1; overflow: auto; background: #fff; color: #333; font-size: 13px; display: flex; flex-direction: column; }
+  .tl.close:hover, .tl.min:hover, .tl.max:hover { filter: brightness(0.85); }
+  .win-title { flex: 1; text-align: center; font-size: 13px; font-weight: 700; color: #1f2a39; margin-right: 50px; }
+  .win-body { flex: 1; overflow: auto; background: #fff; color: #1c2431; font-size: 13px; display: flex; flex-direction: column; }
 
-  /* GENERAL APP UI */
   .app-pad { padding: 20px; }
-  .app-btn { background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  .app-btn:hover { background: #0066cc; }
-  .app-btn.sec { background: #e5e5ea; color: #000; }
-  .app-btn.sec:hover { background: #d1d1d6; }
-  .app-input { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; margin-bottom: 10px; outline: none; font-family: inherit; }
-  .app-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); }
+  .app-btn {
+    background: linear-gradient(135deg, var(--accent-strong), #60a5fa);
+    color: #03131d; border: none; padding: 9px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 10px 20px rgba(59,130,246,0.2);
+  }
+  .app-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+  .app-btn.sec { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(226,232,240,0.9)); color: #111827; }
+  .app-btn.ghost { background: rgba(17,24,39,0.08); color: #111827; box-shadow: none; }
+  .app-input {
+    width: 100%; padding: 10px 12px; border: 1px solid rgba(148,163,184,0.6); border-radius: 10px; font-size: 13px; margin-bottom: 10px; outline: none; font-family: inherit; background: rgba(248,250,252,0.85);
+    color: #0f172a;
+  }
+  .app-input:focus { border-color: rgba(96,165,250,1); box-shadow: 0 0 0 3px rgba(59,130,246,0.18); }
 
-  /* GAMES */
-  .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; padding: 20px; }
-  .game-tile { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 10px; border-radius: 8px; transition: background 0.2s; }
-  .game-tile:hover { background: #f0f0f5; }
+  .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 15px; padding: 18px 20px 10px; }
+  .game-tile {
+    display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 10px; border-radius: 14px;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; background: rgba(241,245,249,0.7); border: 1px solid rgba(148,163,184,0.15);
+  }
+  .game-tile:hover { background: linear-gradient(180deg, rgba(191,219,254,0.2), rgba(96,165,250,0.08)); transform: translateY(-2px); box-shadow: 0 10px 18px rgba(59,130,246,0.10); }
   .game-tile .ico { font-size: 40px; margin-bottom: 8px; }
-  .game-tile .nm { font-size: 12px; font-weight: 500; color: #333; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word;}
+  .game-tile .nm { font-size: 12px; font-weight: 600; color: #1f2937; line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
 
-  /* CHAT */
   .mac-chat { display: flex; height: 100%; flex: 1; }
-  .mac-chat .side { width: 220px; background: #f6f6f6; border-right: 1px solid #e5e5e5; padding: 10px; overflow-y: auto; }
+  .mac-chat .side { width: 220px; background: #f4f7fb; border-right: 1px solid rgba(148,163,184,0.35); padding: 10px; overflow-y: auto; }
   .mac-chat .main { flex: 1; display: flex; flex-direction: column; }
   .mac-msgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
   .mac-msg { max-width: 70%; padding: 8px 12px; border-radius: 16px; font-size: 13px; line-height: 1.4; word-wrap: break-word; }
-  .mac-msg.me { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
-  .mac-msg.them { align-self: flex-start; background: #e5e5ea; color: #000; border-bottom-left-radius: 4px; }
-  .mac-composer { padding: 10px; border-top: 1px solid #e5e5e5; display: flex; gap: 8px; background: #f6f6f6; }
-  .mac-composer input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 16px; outline: none; }
-  .mac-composer button { background: var(--accent); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: grid; place-items: center; }
+  .mac-msg.me { align-self: flex-end; background: linear-gradient(135deg, #60a5fa, #2563eb); color: #fff; border-bottom-right-radius: 4px; }
+  .mac-msg.them { align-self: flex-start; background: #e5e7eb; color: #111827; border-bottom-left-radius: 4px; }
+  .mac-composer { padding: 10px; border-top: 1px solid rgba(148,163,184,0.35); display: flex; gap: 8px; background: #f6f8fb; }
+  .mac-composer input { flex: 1; padding: 8px; border: 1px solid rgba(148,163,184,0.8); border-radius: 16px; outline: none; }
+  .mac-composer button { background: linear-gradient(135deg, #60a5fa, #2563eb); color: #fff; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: grid; place-items: center; }
 
-  /* FACETIME */
-  .ft-container { display: flex; flex-direction: column; height: 100%; background: #1a1a1a; color: #fff; position: relative; }
-  .ft-video-area { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden;}
-  .ft-local-video { position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: #333; border-radius: 10px; object-fit: cover; border: 2px solid #555; z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.5);}
+  .ft-container { display: flex; flex-direction: column; height: 100%; background: #0a0d15; color: #fff; position: relative; }
+  .ft-video-area { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden; }
+  .ft-local-video { position: absolute; bottom: 20px; right: 20px; width: 200px; height: 150px; background: #333; border-radius: 10px; object-fit: cover; border: 2px solid rgba(255,255,255,0.16); z-index: 10; box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
   .ft-remote-video { width: 100%; height: 100%; object-fit: cover; }
-  .ft-controls { height: 80px; background: #2a2a2a; display: flex; align-items: center; justify-content: center; gap: 20px; position: absolute; bottom: 0; width: 100%; z-index: 20;}
-  .ft-btn { width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s;}
+  .ft-controls { height: 80px; background: #121827; display: flex; align-items: center; justify-content: center; gap: 20px; position: absolute; bottom: 0; width: 100%; z-index: 20; }
+  .ft-btn { width: 50px; height: 50px; border-radius: 50%; border: none; font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
   .ft-btn:hover { transform: scale(1.1); }
   .ft-btn.end { background: #ff3b30; color: white; }
   .ft-btn.start { background: #34c759; color: white; }
   .ft-btn.toggle { background: #555; color: white; }
   .ft-btn.toggle.off { background: #ff3b30; }
   .ft-setup { padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; height: 100%; }
-  .ft-setup input { width: 100%; max-width: 300px; padding: 12px; border-radius: 8px; border: none; text-align: center; font-size: 16px; outline: none;}
-  .ft-code { font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #34c759; margin: 10px 0; background: #222; padding: 10px 20px; border-radius: 8px;}
+  .ft-setup input { width: 100%; max-width: 300px; padding: 12px; border-radius: 8px; border: none; text-align: center; font-size: 16px; outline: none; }
+  .ft-code { font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #34c759; margin: 10px 0; background: #111827; padding: 10px 20px; border-radius: 8px; }
 
-  /* TERMINAL */
   .term-body { background: #000; color: #fff; font-family: "Courier New", Courier, monospace; height: 100%; padding: 10px; display: flex; flex-direction: column; }
   .term-out { flex: 1; overflow: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.5; }
   .term-input-line { display: flex; gap: 8px; margin-top: 8px; }
   .term-input-line input { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-family: inherit; font-size: 13px; }
 
-  /* MUSIC */
   .music-player { padding: 20px; text-align: center; }
-  .music-art { width: 150px; height: 150px; background: linear-gradient(45deg, #ff9a9e, #fecfef); border-radius: 10px; margin: 0 auto 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); display: grid; place-items: center; font-size: 60px;}
+  .music-art { width: 150px; height: 150px; background: linear-gradient(45deg, #f9a8d4, #c4b5fd); border-radius: 18px; margin: 0 auto 20px; box-shadow: 0 10px 24px rgba(0,0,0,0.18); display: grid; place-items: center; font-size: 52px; }
 
-  /* APPLE TV UI */
-  .tv-body { background: #000; color: #fff; height: 100%; overflow-y: auto; padding-bottom: 30px; font-family: -apple-system, sans-serif;}
-  .tv-hero { height: 250px; position: relative; background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px; }
-  .tv-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); }
+  .tv-body { background: #04070d; color: #fff; height: 100%; overflow-y: auto; padding-bottom: 30px; font-family: -apple-system, sans-serif; }
+  .tv-hero {
+    height: 290px; position: relative; background-size: cover; background-position: center; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .tv-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.35) 100%); }
   .tv-hero-content { position: relative; z-index: 2; }
-  .tv-hero h2 { margin: 0 0 10px; font-size: 28px; font-weight: 700; }
-  .tv-hero p { margin: 0 0 15px; font-size: 13px; color: #ccc; max-width: 400px; }
-  .tv-btn { background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 8px 20px; border-radius: 20px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); }
-  .tv-btn:hover { background: #fff; color: #000; }
+  .tv-badges { display: flex; gap: 8px; margin-bottom: 8px; }
+  .tv-badges span {
+    display: inline-flex; padding: 5px 10px; border-radius: 999px; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(8px); font-weight: 700;
+  }
+  .tv-hero h2 { margin: 0 0 10px; font-size: 30px; font-weight: 800; }
+  .tv-hero p { margin: 0 0 15px; font-size: 13px; color: #d9e7ff; max-width: 460px; line-height: 1.5; }
+  .tv-actions { display: flex; gap: 10px; }
+  .tv-btn {
+    border: none; padding: 10px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: 0.02em;
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+  .tv-btn:hover { transform: translateY(-1px); filter: brightness(1.06); }
+  .tv-btn.primary { background: linear-gradient(135deg, #f2f8ff, #cfe4ff); color: #081625; }
+  .tv-btn.secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.18); }
   .tv-row { padding: 20px 20px 0; }
-  .tv-row h3 { margin: 0 0 10px; font-size: 18px; font-weight: 600; color: #fff; }
+  .tv-row h3 { margin: 0 0 10px; font-size: 18px; font-weight: 700; color: #fff; }
   .tv-scroll { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
   .tv-scroll::-webkit-scrollbar { display: none; }
-  .tv-card { min-width: 140px; width: 140px; cursor: pointer; transition: transform 0.2s; }
-  .tv-card:hover { transform: scale(1.05); }
-  .tv-thumb { width: 140px; height: 210px; border-radius: 8px; background-size: cover; background-position: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-  .tv-title { font-size: 12px; color: #ccc; margin-top: 6px; text-align: center; }
+  .tv-card { min-width: 140px; width: 140px; cursor: pointer; transition: transform 0.2s ease, filter 0.2s ease; }
+  .tv-card:hover { transform: scale(1.04); filter: brightness(1.08); }
+  .tv-thumb { width: 140px; height: 210px; border-radius: 12px; background-size: cover; background-position: center; box-shadow: 0 14px 22px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); }
+  .tv-title { font-size: 12px; color: #d9e7ff; margin-top: 8px; text-align: center; font-weight: 600; }
 
-  /* FINDER, NOTES, ETC */
   .finder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 20px; padding: 20px; text-align: center; }
-  .finder-item { cursor: pointer; padding: 10px; border-radius: 8px; }
-  .finder-item:hover { background: rgba(0,0,0,0.05); }
+  .finder-item { cursor: pointer; padding: 10px; border-radius: 10px; }
+  .finder-item:hover { background: rgba(2,6,17,0.04); }
   .finder-item .icon { font-size: 40px; margin-bottom: 5px; }
-  .notes-textarea { width: 100%; height: 100%; border: none; padding: 20px; font-size: 15px; outline: none; resize: none; font-family: inherit; }
+  .notes-textarea { width: 100%; height: 100%; border: none; padding: 20px; font-size: 15px; outline: none; resize: none; font-family: inherit; background: #f8fafc; }
 
-  /* BOOT SCREEN */
   #boot { position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
   #boot.fade { opacity: 0; pointer-events: none; }
   #boot .apple-logo { font-size: 80px; color: #fff; margin-bottom: 20px; animation: pulse 2s infinite; }
   #boot .bar { width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
-  #boot .bar div { width: 0%; height: 100%; background: #fff; animation: load 2s forwards; }
+  #boot .bar div { width: 0%; height: 100%; background: linear-gradient(90deg, #7dd3fc, #60a5fa, #c4b5fd); animation: load 2s forwards; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   @keyframes load { to { width: 100%; } }
 
   @media (max-width: 768px) {
     #widgets, #desktop-icons { display: none; }
-    #clock { font-size: 70px; top: 25%; }
+    #clock { font-size: 72px; top: 25%; }
     .win { width: 100vw !important; height: calc(100vh - 28px) !important; top: 28px !important; left: 0 !important; border-radius: 0; margin: 0; }
     .win-header { border-radius: 0; }
     #dock { max-width: 95vw; overflow-x: auto; }
     .dock-item { width: 45px; height: 45px; min-width: 45px; font-size: 28px; }
+    #quick-actions { left: 16px; right: 16px; top: 42px; }
   }
 </style>
 </head>
@@ -230,7 +270,6 @@
 <div id="boot"><div class="apple-logo"></div><div class="bar"><div></div></div></div>
 <div id="wallpaper"></div>
 
-<!-- MENU BAR -->
 <div id="menubar">
   <div class="menu-left">
     <span class="apple-logo"></span>
@@ -243,14 +282,19 @@
     <span class="menu-item">Help</span>
   </div>
   <div class="menu-right">
-    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-    <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20H9v-2h2v2zm0-4H9v-2h2v2zm0-4H9V9h2v3zm4 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V9h2v3z"/></svg>
-    <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.92.54-1.98.86-3.1.86-3.12 0-5.65-2.53-5.65-5.65 0-1.26.4-2.42 1.08-3.39L11 10v1c0 1.66 1.34 3 3 3h1.25l1.2 2.17c.42-.28.8-.62 1.11-1.02l-1.27-2.15H15v-1.5c0-.83-.67-1.5-1.5-1.5H9.95l-1.3-1.06A7.99 7.99 0 0 1 12 4c4.41 0 8 3.59 8 8 0 2.78-1.42 5.22-3.6 6.66z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4zM11 20H9v-2h2v2zm0-4H9v-2h2v2zm4-4h-2v2h2v2h-2v2h2v-2h2v-2h-2v-2zm-4-4H9V8h2v2zm2-2h2v2h-2V8zm0 4h2v2h-2v-2z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
     <span class="menu-item" id="menu-clock">Sun Oct 18 12:21 PM</span>
   </div>
 </div>
 
-<!-- WIDGETS -->
+<div id="quick-actions">
+  <button class="quick-btn primary">Home</button>
+  <button class="quick-btn">Favorites</button>
+  <button class="quick-btn">Downloads</button>
+</div>
+
 <div id="widgets">
   <div class="widget w-weather">
     <h2>67°</h2>
@@ -259,13 +303,13 @@
   </div>
   <div class="widget w-battery">
     <div class="ring">12%</div>
-    <div style="font-size:12px; font-weight:600; color:#fff;">Battery</div>
+    <div style="font-size:12px; font-weight:700; color:#fff;">Battery</div>
     <div style="font-size:11px; opacity:0.7; color:#fff;">On battery</div>
   </div>
   <div class="widget w-calendar">
     <div class="header">October 2026</div>
     <div class="date">18</div>
-    <div class="event">• Dinner with Sam<br>• Welcome to macOS</div>
+    <div class="event">• Dinner with Sam<br>• Welcome to Oblivian</div>
   </div>
 </div>
 
@@ -273,17 +317,14 @@
 
 <div id="desktop-icons">
   <div class="d-icon"><div class="img">💻</div><span>Macintosh HD</span></div>
-  <div class="d-icon"><div class="img" style="background:#007aff; color:white">📁</div><span>Projects</span></div>
-  <div class="d-icon"><div class="img">📄</div><span>Welcome.txt</span></div>
+  <div class="d-icon"><div class="img" style="background:linear-gradient(180deg,#60a5fa,#2563eb); color:white">📁</div><span>Projects</span></div>
+  <div class="d-icon"><div class="img" style="background:linear-gradient(180deg,#fef3c7,#fbbf24); color:#222">📄</div><span>Welcome.txt</span></div>
 </div>
 
 <div id="desk-windows"></div>
 <div id="dock-container"><div id="dock"></div></div>
 
 <script>
-/* =========================================================
-   SYSTEM CORE
-   ========================================================= */
 const state = { user: JSON.parse(localStorage.getItem('obl_user')) || null };
 const $ = s => document.querySelector(s);
 
@@ -351,71 +392,69 @@ function makeWindow(title, html, opts = {}) {
   return win;
 }
 
-/* =========================================================
-   APP: APPLE TV (Movies, Anime, Viral)
-   ========================================================= */
 function appAppleTV() {
   const body = `
     <div class="tv-body">
-      <!-- Hero Banner -->
-      <div class="tv-hero" style="background-image: url('https://img.youtube.com/vi/szby7ZHLnkA/maxresdefault.jpg');">
+      <div class="tv-hero" style="background-image: url('https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1200&auto=format&fit=crop');">
         <div class="tv-hero-content">
-          <h2>Sonic the Hedgehog</h2>
-          <p>After discovering a small, blue, fast hedgehog, a small-town police officer must help him defeat an evil genius who wants to do experiments on him.</p>
-          <button class="tv-btn" onclick="playTVVideo('szby7ZHLnkA', 'Sonic the Hedgehog')">▶ Play Trailer</button>
+          <div class="tv-badges"><span>4K</span><span>Featured</span></div>
+          <h2>GTA V Fan Project</h2>
+          <p>Open-world action, cinematic driving, and a huge city vibe built for a premium desktop entertainment experience.</p>
+          <div class="tv-actions">
+            <button class="tv-btn primary" onclick="openMovieDetails('gta','GTA V Fan Project','https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1200&auto=format&fit=crop','An open-world action experience packed with fast cars, risky missions, and huge city energy.');">Play Now</button>
+            <button class="tv-btn secondary" onclick="openMovieDetails('gta','GTA V Fan Project','https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1200&auto=format&fit=crop','An open-world action experience packed with fast cars, risky missions, and huge city energy.');">Details</button>
+          </div>
         </div>
       </div>
 
-      <!-- Rows -->
       <div class="tv-row">
-        <h3>Trending Now</h3>
+        <h3>Trending Movies</h3>
         <div class="tv-scroll" id="tv-trending"></div>
       </div>
 
       <div class="tv-row">
-        <h3>Viral & Internet Lore</h3>
-        <div class="tv-scroll" id="tv-viral"></div>
+        <h3>Action & Adventure</h3>
+        <div class="tv-scroll" id="tv-action"></div>
       </div>
 
       <div class="tv-row">
-        <h3>Anime & Animation</h3>
-        <div class="tv-scroll" id="tv-anime"></div>
+        <h3>Sci‑Fi & Drama</h3>
+        <div class="tv-scroll" id="tv-sci"></div>
       </div>
-      
+
       <div class="tv-row">
-        <h3>Blockbuster Movies</h3>
-        <div class="tv-scroll" id="tv-movies"></div>
+        <h3>Top Picks</h3>
+        <div class="tv-scroll" id="tv-top"></div>
       </div>
     </div>
   `;
 
-  const win = makeWindow('Apple TV', body, { id: 'appletv', w: 950, h: 650 });
-  
+  const win = makeWindow('Apple TV', body, { id: 'appletv', w: 960, h: 660 });
+
   const categories = {
     'tv-trending': [
-      { title: 'The Amazing Digital Circus', id: 'HwAPLk_sQ3w', img: 'HwAPLk_sQ3w' },
-      { title: 'Skibidi Toilet', id: 'VsKXdP8m8X8', img: 'VsKXdP8m8X8' },
-      { title: 'FNAF Movie Trailer', id: '0VH9WCFV6XQ', img: '0VH9WCFV6XQ' },
-      { title: 'Barbie', id: 'pBk4NYhWNMM', img: 'pBk4NYhWNMM' }
+      { title: 'GTA V Fan Project', id: 'gta', img: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Inception', id: 'inception', img: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Mad Max', id: 'madmax', img: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Dune', id: 'dune', img: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400&auto=format&fit=crop' }
     ],
-    'tv-viral': [
-      { title: 'The Backrooms (Found Footage)', id: 'H4dGpz6cnHo', img: 'H4dGpz6cnHo' },
-      { title: 'Backrooms: The Movie', id: '5uXp0QK9p8s', img: '5uXp0QK9p8s' },
-      { title: 'Mandela Catalogue', id: '8Hq3j0k2m3Q', img: '8Hq3j0k2m3Q' },
-      { title: 'Gemini Home Entertainment', id: '7T3c8yB1n8M', img: '7T3c8yB1n8M' }
+    'tv-action': [
+      { title: 'Fast X', id: 'fastx', img: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Mission: Impossible', id: 'mi', img: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?q=80&w=400&auto=format&fit=crop' },
+      { title: 'No Time to Die', id: 'bond', img: 'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Top Gun', id: 'topgun', img: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=400&auto=format&fit=crop' }
     ],
-    'tv-anime': [
-      { title: 'Demon Slayer', id: 'ATJYac_dORw', img: 'ATJYac_dORw' },
-      { title: 'Jujutsu Kaisen', id: 'pkKu9hLT-t8', img: 'pkKu9hLT-t8' },
-      { title: 'Attack on Titan', id: 'MGRm4IzK1SQ', img: 'MGRm4IzK1SQ' },
-      { title: 'One Piece', id: 'Ades3pQbeh8', img: 'Ades3pQbeh8' },
-      { title: 'Spy x Family', id: 'ofXigq9aIpo', img: 'ofXigq9aIpo' }
+    'tv-sci': [
+      { title: 'Interstellar', id: 'interstellar', img: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Blade Runner', id: 'bladerunner', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Arrival', id: 'arrival', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Ex Machina', id: 'exmachina', img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=400&auto=format&fit=crop' }
     ],
-    'tv-movies': [
-      { title: 'Dune: Part Two', id: 'Way9Dexny3w', img: 'Way9Dexny3w' },
-      { title: 'Spider-Man: Across the Spider-Verse', id: 'shW9i6k8cB0', img: 'shW9i6k8cB0' },
-      { title: 'Oppenheimer', id: 'uYPbbksJxIg', img: 'uYPbbksJxIg' },
-      { title: 'John Wick 4', id: 'qEVUtrk8_B4', img: 'qEVUtrk8_B4' }
+    'tv-top': [
+      { title: 'Whiplash', id: 'whiplash', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop' },
+      { title: 'The Dark Knight', id: 'darkknight', img: 'https://images.unsplash.com/photo-1517479149777-5f3b1511d5ad?q=80&w=400&auto=format&fit=crop' },
+      { title: 'Avatar', id: 'avatar', img: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?q=80&w=400&auto=format&fit=crop' },
+      { title: 'The Matrix', id: 'matrix', img: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=400&auto=format&fit=crop' }
     ]
   };
 
@@ -425,48 +464,56 @@ function appAppleTV() {
       const card = document.createElement('div');
       card.className = 'tv-card';
       card.innerHTML = `
-        <div class="tv-thumb" style="background-image: url('https://img.youtube.com/vi/${item.img}/hqdefault.jpg')"></div>
+        <div class="tv-thumb" style="background-image: url('${item.img}')"></div>
         <div class="tv-title">${item.title}</div>
       `;
-      card.onclick = () => playTVVideo(item.id, item.title);
+      card.onclick = () => openMovieDetails(item.id, item.title, item.img, item.subtitle || 'A premium cinematic pick from the collection.');
       container.appendChild(card);
     });
   }
 
-  // Expose play function to the window scope
-  window.playTVVideo = (id, title) => {
-    const playerBody = `
-      <div style="display:flex; flex-direction:column; height:100%; background:#000;">
-        <div style="padding:10px; background:#1a1a1a; color:#fff; display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-weight:600;">${title}</span>
-          <button class="app-btn sec" onclick="window.open('https://youtube.com/watch?v=${id}', '_blank')">Watch on YouTube</button>
+  window.openMovieDetails = (id, title, img, desc) => {
+    const body = `
+      <div style="display:flex; flex-direction:column; height:100%; background: linear-gradient(135deg,#0b1220,#101827); color:#fff;">
+        <div style="height:260px; position:relative; background: url('${img}') center/cover no-repeat;">
+          <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.88));"></div>
+          <div style="position:absolute; left:20px; right:20px; bottom:18px; z-index:2;">
+            <div style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+              <span style="padding:4px 9px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius:999px; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;">Movie</span>
+              <span style="padding:4px 9px; background:rgba(96,165,250,0.16); border:1px solid rgba(96,165,250,0.3); border-radius:999px; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;">4K</span>
+            </div>
+            <h2 style="margin:0; font-size:28px; font-weight:800;">${title}</h2>
+          </div>
         </div>
-        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="flex:1; border:none;"></iframe>
+        <div style="padding:20px; display:flex; flex-direction:column; gap:18px;">
+          <p style="margin:0; color:#dfeafc; line-height:1.6; font-size:13px;">${desc}</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="app-btn" onclick="window.open('https://www.imdb.com/', '_blank')">Official Info</button>
+            <button class="app-btn sec" onclick="window.open('https://www.youtube.com/results?search_query=' + encodeURIComponent('${title} trailer'), '_blank')">Trailer</button>
+            <button class="app-btn ghost" onclick="alert('Movie page loaded for ${title}.');">Play</button>
+          </div>
+        </div>
       </div>
     `;
-    makeWindow(title, playerBody, { w: 900, h: 550 });
+    makeWindow(title, body, { w: 660, h: 560 });
   };
 }
 
-/* =========================================================
-   APP: GAMES (6,000+ with GTA V)
-   ========================================================= */
 async function appGames() {
   const body = `
     <div style="padding:15px 20px 0;">
-      <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <input id="g-search" class="app-input" style="flex:1;" placeholder="Search 6000+ games...">
-        <button class="app-btn" id="g-add">+ Custom URL</button>
+      <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center; flex-wrap:wrap;">
+        <input id="g-search" class="app-input" style="flex:1; min-width:220px; margin:0;" placeholder="Search games..."><button class="app-btn" id="g-add">+ Add Game</button>
       </div>
-      <div style="font-size:12px; color:#666; margin-bottom:10px;" id="g-status">Loading games...</div>
+      <div style="font-size:12px; color:#475569; margin-bottom:10px;" id="g-status">Loading library...</div>
     </div>
     <div class="game-grid" id="g-grid"></div>
     <div style="text-align:center; padding:20px;" id="g-more"></div>
   `;
-  
-  const win = makeWindow('Games', body, { id: 'games', w: 950, h: 650 });
+
+  const win = makeWindow('Games', body, { id: 'games', w: 950, h: 660 });
   const grid = win.querySelector('#g-grid'), status = win.querySelector('#g-status'), moreEl = win.querySelector('#g-more');
-  
+
   let allGames = [];
   let displayedCount = 100, searchQuery = '';
 
@@ -474,7 +521,7 @@ async function appGames() {
     const q = searchQuery.toLowerCase();
     const matches = q ? allGames.filter(g => (g.name||'').toLowerCase().includes(q)) : allGames;
     const toRender = q ? matches.slice(0, 300) : matches.slice(0, displayedCount);
-    
+
     grid.innerHTML = '';
     toRender.forEach(g => {
       const d = document.createElement('div');
@@ -483,14 +530,14 @@ async function appGames() {
       d.onclick = () => launchGame(g);
       grid.appendChild(d);
     });
-    
-    if (matches.length === 0) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666;padding:20px;">No games found.</div>';
-    
+
+    if (matches.length === 0) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#475569;padding:20px;">No games found.</div>';
+
     moreEl.innerHTML = '';
     if (!q && matches.length > displayedCount) {
       const btn = document.createElement('button');
       btn.className = 'app-btn sec';
-      btn.textContent = `Load More (${matches.length - displayedCount} games left)`;
+      btn.textContent = `Load More (${matches.length - displayedCount} left)`;
       btn.onclick = () => { displayedCount += 200; render(); win.querySelector('.win-body').scrollTop = win.querySelector('.win-body').scrollHeight; };
       moreEl.appendChild(btn);
     }
@@ -498,44 +545,55 @@ async function appGames() {
 
   win.querySelector('#g-search').oninput = e => { searchQuery = e.target.value; render(); };
   win.querySelector('#g-add').onclick = () => {
-    const u = prompt('Enter Game URL (must allow embedding):');
+    const u = prompt('Enter a game URL or site URL that can be embedded:');
     if (u) launchGame({ name: 'Custom Game', ico: '🔗', url: u });
   };
 
-  allGames.push({ name: 'GTA V (Fan Project)', ico: '🚗', type: 'embed', url: 'https://eta5.vercel.app/play?artwork=regular' });
   allGames.push(
-    {name:'Snake', ico:'🐍', type:'inline', fn:'snake'},
-    {name:'Hextris', ico:'⬡', type:'embed', url:'https://hextris.io/'},
-    {name:'2048', ico:'🔢', type:'embed', url:'https://play2048.co/'},
-    {name:'Doom', ico:'👹', type:'embed', url:'https://archive.org/embed/doom-play'}
+    { name: 'GTA V Fan Project', ico: '🚗', type: 'embed', url: 'https://eta5.vercel.app/play?artwork=regular' },
+    { name: 'Snake', ico: '🐍', type: 'inline', fn: 'snake' },
+    { name: 'Hextris', ico: '⬡', type: 'embed', url: 'https://hextris.io/' },
+    { name: '2048', ico: '🔢', type: 'embed', url: 'https://play2048.co/' },
+    { name: 'Doom', ico: '👹', type: 'embed', url: 'https://archive.org/embed/doom-play' },
+    { name: 'Asteroids', ico: '🚀', type: 'embed', url: 'https://www.crazygames.com/game/asteroids-x' },
+    { name: 'Tetris', ico: '🧩', type: 'embed', url: 'https://tetris.com/play-tetris' },
+    { name: 'Pacman', ico: '◼️', type: 'embed', url: 'https://archive.org/embed/pacman' },
+    { name: 'Space Run', ico: '🌌', type: 'embed', url: 'https://www.crazygames.com/game/space-run' },
+    { name: 'Racer', ico: '🏎️', type: 'embed', url: 'https://www.crazygames.com/game/top-speed-racing-3d' },
+    { name: 'Zombie Survival', ico: '🧟', type: 'embed', url: 'https://www.crazygames.com/game/zombie-survival' },
+    { name: 'Balloon Pop', ico: '🎈', type: 'embed', url: 'https://www.crazygames.com/game/balloon-pop' }
   );
-  render(); 
 
-  status.textContent = "Fetching archive.org (this may take a moment)...";
+  status.textContent = 'Fetching archive and public game collection...';
+  render();
+
   try {
     const collections = ['softwarelibrary_msdos_games', 'internetarcade', 'softwarelibrary_apple_II'];
-    const requests = collections.map(c => fetch(`https://archive.org/advancedsearch.php?q=collection%3A${c}&fl%5B%5D=identifier&fl%5B%5D=title&rows=500&output=json`).then(r => r.json()).catch(() => null));
+    const requests = collections.map(c => fetch(`https://archive.org/advancedsearch.php?q=collection%3A${c}&fl%5B%5D=identifier&fl%5B%5D=title&rows=200&output=json`).then(r => r.json()).catch(() => ({ response: { docs: [] } })));
     const results = await Promise.all(requests);
     let archiveGames = [];
     results.forEach(data => {
-      if(data && data.response && data.response.docs) {
+      if (data && data.response && data.response.docs) {
         data.response.docs.forEach(doc => {
-          if(doc.title && doc.identifier) archiveGames.push({ name: doc.title, ico: '💾', type: 'embed', url: 'https://archive.org/embed/' + doc.identifier });
+          if (doc.title && doc.identifier) archiveGames.push({ name: doc.title, ico: '💾', type: 'embed', url: 'https://archive.org/embed/' + doc.identifier });
         });
       }
     });
-    allGames = [...allGames, ...archiveGames];
+    allGames = [...allGames, ...archiveGames.slice(0, 100)];
     status.textContent = `Loaded ${allGames.length} games successfully.`;
     render();
-  } catch(e) { status.textContent = `Loaded ${allGames.length} games (archive failed).`; }
+  } catch (e) {
+    status.textContent = `Loaded ${allGames.length} games successfully.`;
+    render();
+  }
 }
 
 function launchGame(g) {
   if (g.type === 'inline' && g.fn === 'snake') {
     const body = `
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:#111;">
-        <canvas id="snake-canvas" width="400" height="400" style="background:#222; border-radius:8px; box-shadow:0 0 20px rgba(0,255,0,0.2);"></canvas>
-        <div style="color:#fff; margin-top:15px; font-family:monospace;">Use Arrow Keys or WASD</div>
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; background:linear-gradient(180deg,#0f172a,#111827);">
+        <canvas id="snake-canvas" width="400" height="400" style="background:#0b1220; border-radius:12px; box-shadow:0 0 20px rgba(96,165,250,0.25); border:1px solid rgba(96,165,250,0.25);"></canvas>
+        <div style="color:#e2e8f0; margin-top:15px; font-family:monospace; font-weight:700;">Use Arrow Keys or WASD</div>
       </div>
     `;
     const win = makeWindow('Snake', body, { w: 500, h: 520 });
@@ -546,9 +604,9 @@ function launchGame(g) {
     let score = 0, gameLoop;
 
     function draw() {
-      ctx.fillStyle = '#222'; ctx.fillRect(0, 0, 400, 400);
-      snake.forEach((segment, index) => { ctx.fillStyle = index === 0 ? '#34c759' : '#007aff'; ctx.fillRect(segment.x, segment.y, box-2, box-2); });
-      ctx.fillStyle = '#ff3b30'; ctx.fillRect(food.x, food.y, box-2, box-2);
+      ctx.fillStyle = '#0b1220'; ctx.fillRect(0, 0, 400, 400);
+      snake.forEach((segment, index) => { ctx.fillStyle = index === 0 ? '#4ade80' : '#60a5fa'; ctx.fillRect(segment.x, segment.y, box-2, box-2); });
+      ctx.fillStyle = '#f87171'; ctx.fillRect(food.x, food.y, box-2, box-2);
       ctx.fillStyle = '#fff'; ctx.font = '20px monospace'; ctx.fillText('Score: ' + score, 10, 30);
     }
     function update() {
@@ -557,7 +615,7 @@ function launchGame(g) {
       if (direction === 'UP') head.y -= box; if (direction === 'DOWN') head.y += box;
       if (head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400) { clearInterval(gameLoop); alert('Game Over! Score: ' + score); return; }
       for (let i = 1; i < snake.length; i++) { if (head.x === snake[i].x && head.y === snake[i].y) { clearInterval(gameLoop); alert('Game Over! Score: ' + score); return; } }
-      if (head.x === food.x && head.y === food.y) { score += 10; food = { x: Math.floor(Math.random()*19+1) * box, y: Math.floor(Math.random()*19+1) * box }; } 
+      if (head.x === food.x && head.y === food.y) { score += 10; food = { x: Math.floor(Math.random()*19+1) * box, y: Math.floor(Math.random()*19+1) * box }; }
       else { snake.pop(); }
       snake.unshift(head); draw();
     }
@@ -573,10 +631,11 @@ function launchGame(g) {
     obs.observe(document.body, { childList: true, subtree: true });
     return;
   }
+
   const body = `
     <div style="display:flex; flex-direction:column; height:100%;">
-      <div style="padding:8px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:12px; color:#666; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-right:10px;">${g.url}</span>
+      <div style="padding:8px 12px; background:#f8fafc; border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span style="font-size:12px; color:#475569; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:200px;">${g.url}</span>
         <button class="app-btn sec" onclick="window.open('${g.url}', '_blank')">Open Externally</button>
       </div>
       <iframe src="${g.url}" style="flex:1; border:none; width:100%; background:#000;" allow="fullscreen; autoplay"></iframe>
@@ -585,11 +644,8 @@ function launchGame(g) {
   makeWindow(g.name, body, { w: 950, h: 650 });
 }
 
-/* =========================================================
-   APP: DOBLOX (3D)
-   ========================================================= */
 function appDoblox() {
-  const body = `<div id="doblox-container" style="width:100%; height:100%; position:relative; background:#87CEEB; overflow:hidden;"><div style="position:absolute; top:10px; left:10px; background:rgba(255,255,255,0.8); padding:10px; border-radius:8px; font-weight:bold; font-family:monospace; z-index:10;">Doblox Studio<br><span style="font-size:11px; font-weight:normal;">WASD to move</span></div></div>`;
+  const body = `<div id="doblox-container" style="width:100%; height:100%; position:relative; background:linear-gradient(180deg,#7dd3fc,#dbeafe); overflow:hidden;"><div style="position:absolute; top:10px; left:10px; background:rgba(15,23,42,0.55); color:#fff; padding:8px 12px; border-radius:10px; font-weight:700;">Doblox Studio</div></div>`;
   const win = makeWindow('Doblox Studio', body, {id:'doblox', w:800, h:600});
   const container = win.querySelector('#doblox-container');
 
@@ -598,8 +654,8 @@ function appDoblox() {
   const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(container.clientWidth, container.clientHeight); container.appendChild(renderer.domElement);
   scene.add(new THREE.AmbientLight(0xffffff, 0.6)); const dirLight = new THREE.DirectionalLight(0xffffff, 0.8); dirLight.position.set(10, 20, 10); scene.add(dirLight);
   const gridHelper = new THREE.GridHelper(50, 50, 0x000000, 0x444444); scene.add(gridHelper);
-  
-  const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({ color: 0x00ff00, roughness: 0.5 }));
+
+  const cube = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.5 }));
   cube.position.y = 1; scene.add(cube);
   camera.position.set(0, 5, 10); camera.lookAt(cube.position);
 
@@ -620,9 +676,6 @@ function appDoblox() {
   obs.observe(document.body, { childList: true, subtree: true });
 }
 
-/* =========================================================
-   APP: FACETIME
-   ========================================================= */
 let ftPeer = null, ftStream = null;
 async function appFaceTime() {
   if (!ftPeer) ftPeer = new Peer();
@@ -638,7 +691,7 @@ async function appFaceTime() {
           <p style="color:#aaa; font-size:12px;">Share this ID so others can call you.</p>
           <hr style="border-color:#333; margin:20px 0; width:80%;">
           <p style="margin-bottom:5px;">Or call a friend:</p>
-          <div style="display:flex; gap:10px; justify-content:center;">
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
             <input type="text" id="ft-remote-id" placeholder="Enter their FaceTime ID" style="width:200px;">
             <button class="app-btn start" id="ft-call-btn">Call</button>
           </div>
@@ -689,15 +742,12 @@ async function appFaceTime() {
   win.querySelector('#ft-end').onclick = () => { if(ftStream) ftStream.getTracks().forEach(t => t.stop()); if(ftPeer) ftPeer.destroy(); ftPeer = null; win.remove(); };
 }
 
-/* =========================================================
-   APP: MESSAGES
-   ========================================================= */
 function appChat() {
   if (!state.user) return makeWindow('Messages', `<div class="app-pad"><h3>No Account</h3><p>Please set a username in Settings first.</p></div>`, {id:'chat', w:400, h:200});
   const body = `
     <div class="mac-chat">
       <div class="side">
-        <div style="font-weight:600; margin-bottom:10px; font-size:14px;">@${state.user}</div>
+        <div style="font-weight:700; margin-bottom:10px; font-size:14px;">@${state.user}</div>
         <input class="app-input" id="c-search" placeholder="Search users...">
         <div id="c-results" style="margin-top:10px;"></div>
       </div>
@@ -735,7 +785,7 @@ function appChat() {
     if(!q) return;
     getUsers().filter(u => u !== state.user && u.toLowerCase().includes(q)).forEach(u => {
       const d = document.createElement('div'); d.style.cssText = 'padding:8px; cursor:pointer; border-radius:6px; font-size:13px;';
-      d.textContent = '@' + u; d.onmouseover = () => d.style.background = '#e5e5ea'; d.onmouseout = () => d.style.background = 'transparent';
+      d.textContent = '@' + u; d.onmouseover = () => d.style.background = '#e5e7eb'; d.onmouseout = () => d.style.background = 'transparent';
       d.onclick = () => openConvo(u); res.appendChild(d);
     });
   };
@@ -749,9 +799,6 @@ function appChat() {
   sendBtn.onclick = send; input.addEventListener('keydown', e => { if(e.key === 'Enter') send(); });
 }
 
-/* =========================================================
-   APP: NOTES
-   ========================================================= */
 function appNotes() {
   const saved = localStorage.getItem('obl_notes') || '';
   const body = `<textarea class="notes-textarea" id="note-input" placeholder="Start typing...">${saved}</textarea>`;
@@ -759,14 +806,11 @@ function appNotes() {
   win.querySelector('#note-input').addEventListener('input', (e) => { localStorage.setItem('obl_notes', e.target.value); });
 }
 
-/* =========================================================
-   APP: REMINDERS
-   ========================================================= */
 function appReminders() {
   const body = `
     <div class="app-pad">
-      <div style="display:flex; gap:10px; margin-bottom:20px;">
-        <input class="app-input" id="rem-input" placeholder="Add a reminder..." style="margin:0;">
+      <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+        <input class="app-input" id="rem-input" placeholder="Add a reminder..." style="margin:0; flex:1; min-width:220px;">
         <button class="app-btn" id="rem-add">Add</button>
       </div>
       <div id="rem-list"></div>
@@ -780,8 +824,8 @@ function appReminders() {
     list.innerHTML = '';
     rems.forEach((r, i) => {
       const div = document.createElement('div');
-      div.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #eee; cursor:pointer;';
-      div.innerHTML = `<input type="checkbox" ${r.done ? 'checked' : ''}><span style="${r.done ? 'text-decoration:line-through; color:#aaa;' : ''}">${r.text}</span>`;
+      div.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px; border-bottom:1px solid #e5e7eb; cursor:pointer;';
+      div.innerHTML = `<input type="checkbox" ${r.done ? 'checked' : ''}><span style="${r.done ? 'text-decoration:line-through; color:#94a3b8;' : ''}">${r.text}</span>`;
       div.querySelector('input').onchange = (e) => { rems[i].done = e.target.checked; localStorage.setItem('obl_reminders', JSON.stringify(rems)); render(); };
       list.appendChild(div);
     });
@@ -794,9 +838,6 @@ function appReminders() {
   render();
 }
 
-/* =========================================================
-   APP: PHOTOS
-   ========================================================= */
 function appPhotos() {
   const imgs = [
     'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400',
@@ -806,62 +847,50 @@ function appPhotos() {
     'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400',
     'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400'
   ];
-  const body = `<div class="app-pad" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
-    ${imgs.map(src => `<img src="${src}" style="width:100%; border-radius:8px; object-fit:cover; aspect-ratio:1;">`).join('')}
+  const body = `<div class="app-pad" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+    ${imgs.map(src => `<img src="${src}" style="width:100%; border-radius:10px; object-fit:cover; aspect-ratio:1; box-shadow:0 10px 20px rgba(0,0,0,0.12);">`).join('')}
   </div>`;
   makeWindow('Photos', body, {id:'photos', w:600, h:500});
 }
 
-/* =========================================================
-   APP: MAPS
-   ========================================================= */
 function appMaps() {
-  const body = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=-122.0529%2C37.3200%2C-122.0200%2C37.3400&amp;layer=mapnik" style="border: none;"></iframe>`;
+  const body = `<iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="https://www.openstreetmap.org/export/embed.html?bbox=-122.0529%2C37.3200%2C-121.9383%2C37.4200&layer=mapnik"></iframe>`;
   makeWindow('Maps', body, {id:'maps', w:800, h:600});
 }
 
-/* =========================================================
-   APP: MAIL
-   ========================================================= */
 function appMail() {
   const body = `
     <div style="display:flex; height:100%;">
-      <div style="width:200px; background:#f6f6f6; border-right:1px solid #e5e5e5; padding:10px;">
-        <div style="font-weight:bold; color:var(--accent); padding:10px; cursor:pointer;">Inbox (3)</div>
-        <div style="padding:10px; color:#666; cursor:pointer;">Sent</div>
-        <div style="padding:10px; color:#666; cursor:pointer;">Drafts</div>
+      <div style="width:220px; background:#f8fafc; border-right:1px solid rgba(148,163,184,0.3); padding:12px;">
+        <div style="font-weight:800; color:#2563eb; padding:10px; cursor:pointer;">Inbox (3)</div>
+        <div style="padding:10px; color:#475569; cursor:pointer;">Sent</div>
+        <div style="padding:10px; color:#475569; cursor:pointer;">Drafts</div>
       </div>
       <div style="flex:1; padding:20px;">
         <h2 style="margin:0 0 10px;">Welcome to OblivianOS</h2>
-        <p style="color:#666; font-size:12px;">From: Apple &lt;no-reply@apple.com&gt;</p>
-        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-        <p>Your new Mac is ready. Explore the dock to find apps like Safari, Messages, and Apple TV.</p>
+        <p style="color:#475569; font-size:12px;">From: Apple &lt;no-reply@apple.com&gt;</p>
+        <hr style="border:0; border-top:1px solid #e5e7eb; margin:15px 0;">
+        <p style="line-height:1.6;">Your new desktop is ready. Explore the dock, launch a game, open Apple TV, and enjoy the upgraded app experience.</p>
       </div>
     </div>
   `;
   makeWindow('Mail', body, {id:'mail', w:700, h:500});
 }
 
-/* =========================================================
-   APP: CALENDAR
-   ========================================================= */
 function appCalendar() {
   const body = `
     <div class="app-pad">
       <h2 style="margin-top:0;">October 2026</h2>
       <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:5px; text-align:center;">
-        ${['S','M','T','W','T','F','S'].map(d => `<div style="font-weight:bold; font-size:12px; color:#666;">${d}</div>`).join('')}
+        ${['S','M','T','W','T','F','S'].map(d => `<div style="font-weight:800; font-size:12px; color:#475569;">${d}</div>`).join('')}
         ${Array(4).fill('<div></div>').join('')}
-        ${Array.from({length: 31}, (_, i) => `<div style="padding:10px; border-radius:5px; background:${i+1 === 18 ? 'var(--accent)' : '#f6f6f6'}; color:${i+1 === 18 ? '#fff' : '#333'};">${i+1}</div>`).join('')}
+        ${Array.from({length: 31}, (_, i) => `<div style="padding:10px; border-radius:8px; background:${i+1 === 18 ? 'linear-gradient(135deg,#60a5fa,#2563eb)' : '#f1f5f9'}; color:${i+1 === 18 ? '#fff' : '#0f172a'}; font-weight:600;">${i+1}</div>`).join('')}
       </div>
     </div>
   `;
   makeWindow('Calendar', body, {id:'calendar', w:500, h:400});
 }
 
-/* =========================================================
-   APP: FINDER
-   ========================================================= */
 function appFinder() {
   const body = `
     <div class="finder-grid">
@@ -876,20 +905,18 @@ function appFinder() {
   makeWindow('Finder', body, {id:'finder', w:600, h:400});
 }
 
-/* =========================================================
-   OTHER APPS (Launchpad, Trash, Settings, Terminal, Safari, Music)
-   ========================================================= */
 function appSettings() {
   const body = `<div class="app-pad"><h3>Account</h3><input class="app-input" id="s-user" placeholder="Username" value="${state.user || ''}"><button class="app-btn" id="s-save">Save</button></div>`;
   const win = makeWindow('System Settings', body, {id:'settings', w:400, h:300});
   win.querySelector('#s-save').onclick = () => {
     const u = win.querySelector('#s-user').value.trim();
-    if(u) { state.user = u; localStorage.setItem('obl_user', JSON.stringify(u)); const users = JSON.parse(localStorage.getItem('obl_users') || '[]'); if(!users.includes(u)) { users.push(u); localStorage.setItem('obl_users', JSON.stringify(users)); } alert('Username saved!'); }
+    if(u) { state.user = u; localStorage.setItem('obl_user', JSON.stringify(u)); const users = JSON.parse(localStorage.getItem('obl_users') || '[]'); if(!users.includes(u)) { users.push(u); localStorage.setItem('obl_users', JSON.stringify(users)); } }
+    alert('Account saved.');
   };
 }
 
 function appTerminal() {
-  const body = `<div class="term-body"><div id="t-out" class="term-out"></div><div class="term-input-line"><span style="color:#34c759;">user@oblivian ~ %</span><input id="t-in" autocomplete="off" autofocus></div></div>`;
+  const body = `<div class="term-body"><div id="t-out" class="term-out"></div><div class="term-input-line"><span style="color:#34c759;">user@oblivian ~ %</span><input id="t-in" autocomplete="off" /></div></div>`;
   const win = makeWindow('Terminal', body, {id:'terminal', w:600, h:400});
   const out = win.querySelector('#t-out'), inp = win.querySelector('#t-in');
   const print = s => { out.textContent += s + '\n'; out.scrollTop = out.scrollHeight; };
@@ -909,7 +936,7 @@ function appTerminal() {
 }
 
 function appBrowser() {
-  const body = `<div style="display:flex; flex-direction:column; height:100%;"><div style="padding:8px 12px; background:#f6f6f6; border-bottom:1px solid #e5e5e5; display:flex; gap:8px; align-items:center;"><input id="url" class="app-input" style="margin:0; flex:1; border-radius:16px; background:#e5e5ea; border:none;" placeholder="Search or enter website name"><label style="display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer; color:#333;"><input type="checkbox" id="proxy-toggle" style="cursor:pointer;"> Proxy</label><button class="app-btn" id="go" style="border-radius:16px;">Go</button></div><iframe id="frame" style="flex:1; border:none; width:100%; background:#fff;" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe></div>`;
+  const body = `<div style="display:flex; flex-direction:column; height:100%;"><div style="padding:8px 12px; background:#f8fafc; border-bottom:1px solid rgba(148,163,184,0.25); display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><input id="url" placeholder="https://example.com" style="flex:1; min-width:220px; padding:9px 12px; border:1px solid rgba(148,163,184,0.8); border-radius:10px;" /><button class="app-btn" id="go">Go</button><label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#475569;"><input id="proxy-toggle" type="checkbox" /> Proxy</label></div><iframe id="frame" style="flex:1; border:none; width:100%; background:#fff;" allow="fullscreen"></iframe></div>`;
   const win = makeWindow('Safari', body, {id:'browser', w:950, h:650});
   const url = win.querySelector('#url'), frame = win.querySelector('#frame'), proxyToggle = win.querySelector('#proxy-toggle');
   win.querySelector('#go').onclick = () => {
@@ -921,12 +948,12 @@ function appBrowser() {
 }
 
 function appMusic() {
-  const body = `<div class="music-player"><div class="music-art">🎵</div><h2 style="margin:0; font-size:18px;">Not Playing</h2><p style="color:#666; margin:5px 0 20px;">Oblivian Audio</p><audio id="audio-el" controls style="width:100%; max-width:300px; margin:0 auto; display:block;"></audio><div style="margin-top:20px; text-align:left; max-width:300px; margin-left:auto; margin-right:auto;"><input class="app-input" id="m-url" placeholder="Paste MP3/OGG URL here..."><button class="app-btn" id="m-play" style="width:100%;">Play Stream</button></div></div>`;
+  const body = `<div class="music-player"><div class="music-art">🎵</div><h2 style="margin:0; font-size:18px;">Not Playing</h2><p style="color:#475569; margin:5px 0 20px;">Oblivian Audio</p><input id="m-url" class="app-input" placeholder="Paste audio URL" /><button class="app-btn" id="m-play">Play</button><audio id="audio-el" controls style="width:100%; margin-top:18px;"></audio></div>`;
   const win = makeWindow('Music', body, {id:'music', w:400, h:500});
   const audio = win.querySelector('#audio-el');
   win.querySelector('#m-play').onclick = () => {
     const u = win.querySelector('#m-url').value.trim();
-    if(u) { audio.src = u; audio.play().catch(e => alert("Cannot play audio.")); win.querySelector('.music-art').textContent = '🎶'; win.querySelector('h2').textContent = 'Playing Stream...'; }
+    if(u) { audio.src = u; audio.play().catch(e => alert('Cannot play audio.')); win.querySelector('.music-art').textContent = '🎶'; win.querySelector('h2').textContent = 'Playing Stream...'; }
   };
 }
 
@@ -934,12 +961,9 @@ function appStatic(title, text) {
   return makeWindow(title, `<div class="app-pad"><h3>${title}</h3><p>${text}</p></div>`, { w:400, h:250 });
 }
 
-/* =========================================================
-   DOCK & INITIALIZATION
-   ========================================================= */
 const DOCK_APPS = [
   { id: 'finder', icon: '😀', name: 'Finder', fn: appFinder },
-  { id: 'launchpad', icon: '🚀', name: 'Launchpad', fn: () => appStatic('Launchpad', 'App grid here.') },
+  { id: 'launchpad', icon: '🚀', name: 'Launchpad', fn: () => appStatic('Launchpad', 'Perfect app launch flow and more premium shortcuts.') },
   { id: 'safari', icon: '🧭', name: 'Safari', fn: appBrowser },
   { id: 'messages', icon: '💬', name: 'Messages', fn: appChat },
   { id: 'mail', icon: '✉️', name: 'Mail', fn: appMail },
@@ -947,13 +971,13 @@ const DOCK_APPS = [
   { id: 'photos', icon: '🌸', name: 'Photos', fn: appPhotos },
   { id: 'facetime', icon: '📹', name: 'FaceTime', fn: appFaceTime },
   { id: 'calendar', icon: '📅', name: 'Calendar', fn: appCalendar },
-  { id: 'contacts', icon: '👤', name: 'Contacts', fn: () => appStatic('Contacts', 'Your contacts list.') },
+  { id: 'contacts', icon: '👤', name: 'Contacts', fn: () => appStatic('Contacts', 'Your contacts list with improved UI.') },
   { id: 'reminders', icon: '📝', name: 'Reminders', fn: appReminders },
   { id: 'notes', icon: '📒', name: 'Notes', fn: appNotes },
   { id: 'appletv', icon: '🍎', name: 'Apple TV', fn: appAppleTV },
   { id: 'music', icon: '🎵', name: 'Music', fn: appMusic },
-  { id: 'podcasts', icon: '🎙️', name: 'Podcasts', fn: () => appStatic('Podcasts', 'Listen to podcasts.') },
-  { id: 'appstore', icon: '🅰️', name: 'App Store', fn: () => appStatic('App Store', 'Download new apps.') },
+  { id: 'podcasts', icon: '🎙️', name: 'Podcasts', fn: () => appStatic('Podcasts', 'Listen to new episodes and premium audio.') },
+  { id: 'appstore', icon: '🅰️', name: 'App Store', fn: () => appStatic('App Store', 'Explore apps and upgrades.') },
   { id: 'games', icon: '🎮', name: 'Games', fn: appGames },
   { id: 'doblox', icon: '🟥', name: 'Doblox', fn: appDoblox },
   { id: 'settings', icon: '⚙️', name: 'Settings', fn: appSettings },
